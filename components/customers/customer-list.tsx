@@ -1,19 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Phone, MessageSquare, MoreHorizontal } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 
 interface Customer {
   id: string
@@ -30,6 +20,7 @@ interface Customer {
 export function CustomerList() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -47,93 +38,92 @@ export function CustomerList() {
     fetchCustomers()
   }, [])
 
-  // Format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString()
-  }
-
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount)
-  }
-
   return (
-    <div className="rounded-md border">
-      {isLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-        </div>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Customer</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Last Contact</TableHead>
-              <TableHead>Total Spent</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+    <div className="flex h-screen">
+      {/* Sidebar */}
+      <div className="w-1/3 border-r overflow-y-auto">
+        <div className="p-4 font-bold text-lg">Customers</div>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <ul>
             {customers.map((customer) => (
-              <TableRow key={customer.id}>
-                <TableCell>
-                  <div className="flex items-center space-x-3">
-                    <Avatar>
-                      <AvatarImage src={customer.avatar || "/placeholder.svg"} />
-                      <AvatarFallback>
-                        {customer.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">{customer.name}</div>
-                      <div className="text-sm text-muted-foreground">{customer.company}</div>
-                    </div>
+              <li
+                key={customer.id}
+                className={`p-4 cursor-pointer hover:bg-gray-900 ${
+                  selectedCustomer?.id === customer.id ? "bg-gray-900" : ""
+                }`}
+                onClick={() => setSelectedCustomer(customer)}
+              >
+                <div className="flex items-center space-x-3">
+                  <Avatar>
+                    <AvatarImage src={customer.avatar || "/placeholder.svg"} />
+                    <AvatarFallback>
+                      {customer.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="font-medium">{customer.name}</div>
+                    <div className="text-sm text-muted-foreground">{customer.company}</div>
                   </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={customer.status === "active" ? "default" : "secondary"}>{customer.status}</Badge>
-                </TableCell>
-                <TableCell>{formatDate(customer.lastContact)}</TableCell>
-                <TableCell>{formatCurrency(customer.totalSpent)}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="ghost" size="icon">
-                      <Phone className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                      <MessageSquare className="h-4 w-4" />
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>View Profile</DropdownMenuItem>
-                        <DropdownMenuItem>Edit Customer</DropdownMenuItem>
-                        <DropdownMenuItem>View History</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">Delete Customer</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </TableCell>
-              </TableRow>
+                </div>
+              </li>
             ))}
-          </TableBody>
-        </Table>
-      )}
+          </ul>
+        )}
+      </div>
+
+      {/* Chat Window */}
+      <div className="flex-1 flex flex-col">
+        {selectedCustomer ? (
+          <>
+            {/* Chat Header */}
+            <div className="p-4 border-b flex items-center space-x-3">
+              <Avatar>
+                <AvatarImage src={selectedCustomer.avatar || "/placeholder.svg"} />
+                <AvatarFallback>
+                  {selectedCustomer.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="font-medium">{selectedCustomer.name}</div>
+                <div className="text-sm text-muted-foreground">{selectedCustomer.company}</div>
+              </div>
+            </div>
+
+            {/* Chat Messages */}
+            <div className="flex-1 p-4 overflow-y-auto">
+              <div className="text-center text-sm text-muted-foreground">
+                Chat with {selectedCustomer.name} will appear here.
+              </div>
+            </div>
+
+            {/* Chat Input */}
+            <div className="p-4 border-t">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  placeholder="Type a message..."
+                  className="flex-1 px-4 py-2 border rounded-md"
+                />
+                <Button>Send</Button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-full text-muted-foreground">
+            Select a customer to start chatting.
+          </div>
+        )}
+      </div>
     </div>
   )
 }
