@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { format, isToday, isYesterday } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
@@ -21,6 +22,19 @@ interface ChatEntry {
   content: { sender: "user" | "response"; message: string }[];
 }
 
+const formatDate = (dateString: string) => {
+  if (!dateString) return "Invalid Date";
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return "Invalid Date";
+  if (isToday(date)) {
+    return "Today";
+  } else if (isYesterday(date)) {
+    return "Yesterday";
+  } else {
+    return format(date, "MM/dd/yyyy");
+  }
+};
+
 export function ChatWindow({ selectedCustomer }: ChatWindowProps) {
   const [expandedChatId, setExpandedChatId] = useState<string | null>(null);
 
@@ -28,7 +42,7 @@ export function ChatWindow({ selectedCustomer }: ChatWindowProps) {
   const chatEntries: ChatEntry[] = [
     {
       id: "1",
-      date: "1/2/2025",
+      date: "4/17/2025",
       time: "12:00 PM",
       summary: "Initial contact",
       content: [
@@ -39,7 +53,7 @@ export function ChatWindow({ selectedCustomer }: ChatWindowProps) {
     },
     {
       id: "2",
-      date: "1/3/2025",
+      date: "4/16/2025",
       time: "1:00 PM",
       content: [
         {
@@ -104,7 +118,7 @@ export function ChatWindow({ selectedCustomer }: ChatWindowProps) {
               <AccordionTrigger className="hover:bg-transparent">
                 <div className="flex items-center space-x-2">
                   <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                  <span className="font-medium">{entry.date}</span>
+                  <span className="font-medium">{formatDate(entry.date)}</span>
                   <ClockIcon className="h-5 w-5 text-muted-foreground ml-4" />
                   <span className="font-medium">{entry.time}</span>
                 </div>
