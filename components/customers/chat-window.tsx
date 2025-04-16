@@ -137,20 +137,29 @@ export function ChatWindow({ selectedCustomer }: ChatWindowProps) {
                     >
                       {/* Chat Message */}
                       <div
-                        className={`p-2 rounded-lg ${
+                        className={`p-2 rounded-lg cursor-pointer ${
                           chat.sender === "user"
                             ? "bg-white text-black border border-gray-300" // Right-side chat (user)
                             : "bg-black text-white border border-white" // Left-side chat (response)
                         }`}
+                        onClick={() =>
+                          setExpandedChatId(
+                            expandedChatId === `${entry.id}-${index}`
+                              ? null
+                              : `${entry.id}-${index}`
+                          )
+                        }
                       >
                         {chat.message}
                       </div>
 
                       {/* Audio Player */}
-                      <AudioPlayer
-                        className="custom-style"
-                        src="/path/to/dummy-audio.mp3"
-                      />
+                      {expandedChatId === `${entry.id}-${index}` && (
+                        <AudioPlayer
+                          className="custom-style"
+                          src="/path/to/dummy-audio.mp3"
+                        />
+                      )}
                     </div>
                   ))}
                 </div>
