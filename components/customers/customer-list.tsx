@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { CustomerSearch } from "./customer-search";
+import { ChatWindow } from "./chat-window";
 
 interface Customer {
   id: string;
@@ -45,7 +44,6 @@ export function CustomerList() {
     <div className="flex max-h-screen">
       {/* Sidebar */}
       <div className="w-1/3 border-r overflow-y-auto">
-        {/* <div className="p-4 font-bold text-lg"></div> */}
         <CustomerSearch />
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
@@ -85,55 +83,7 @@ export function CustomerList() {
       </div>
 
       {/* Chat Window */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        {selectedCustomer ? (
-          <>
-            {/* Chat Header */}
-            <div className="p-4 border-b flex items-center space-x-3 shrink-0">
-              <Avatar>
-                <AvatarImage
-                  src={selectedCustomer.avatar || "/placeholder.svg"}
-                />
-                <AvatarFallback>
-                  {selectedCustomer.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="font-medium">{selectedCustomer.name}</div>
-                <div className="text-sm text-muted-foreground">
-                  {selectedCustomer.company}
-                </div>
-              </div>
-            </div>
-
-            {/* Chat Messages */}
-            <div className="flex-1 min-h-0 overflow-y-auto p-4">
-              <div className="text-center text-sm text-muted-foreground">
-                Chat with {selectedCustomer.name} will appear here.
-              </div>
-            </div>
-
-            {/* Chat Input */}
-            <div className="p-4 border-t shrink-0">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="text"
-                  placeholder="Type a message..."
-                  className="flex-1 px-4 py-2 border rounded-md"
-                />
-                <Button>Send</Button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
-            Select a customer to start chatting.
-          </div>
-        )}
-      </div>
+      <ChatWindow selectedCustomer={selectedCustomer} />
     </div>
   );
 }

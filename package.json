@@ -3,14 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^3.9.1",
-    "@radix-ui/react-accordion": "^1.2.2",
+    "@radix-ui/react-accordion": "^1.2.4",
     "@radix-ui/react-alert-dialog": "^1.1.4",
     "@radix-ui/react-aspect-ratio": "^1.1.1",
     "@radix-ui/react-avatar": "^1.1.2",
@@ -60,7 +61,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@types/node": "^22",
+    "@types/node": "^22.14.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "postcss": "^8",
