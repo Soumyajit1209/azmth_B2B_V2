@@ -48,11 +48,12 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
   const [callState, setCallState] = useState<CallState>(CallState.IDLE)
   const [isMuted, setIsMuted] = useState(false)
   const [isSpeakerOn, setIsSpeakerOn] = useState(true)
-  const [isAIMode, setIsAIMode] = useState(false)
+  const [isAIMode, setIsAIMode] = useState(true) // AI Mode enabled by default
   const [callDuration, setCallDuration] = useState(0)
   const [isHolding, setIsHolding] = useState(false)
   const [showDialpad, setShowDialpad] = useState(false)
   const [currentContact, setCurrentContact] = useState<Contact | null>(null)
+  const [callId, setCallId] = useState<string | null>(null)
 
   // Handle call duration timer
   useEffect(() => {
@@ -69,6 +70,39 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
     }
   }, [callState, isHolding])
 
+  // Set up the event source for server-sent events from the backend
+  useEffect(() => {
+    if (callId && callState === CallState.ACTIVE) {
+      // Listen for server-sent events for call status updates
+      const eventSource = new EventSource(`/api/globaltfn/call/events?callId=${callId}`)
+      
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data)
+        
+        if (data.status === "ended") {
+          setCallState(CallState.ENDED)
+          
+          // Reset after 2 seconds
+          setTimeout(() => {
+            resetCallState()
+          }, 2000)
+          
+          // Close the event source
+          eventSource.close()
+        }
+      }
+      
+      eventSource.onerror = () => {
+        console.error("Error with event source connection")
+        eventSource.close()
+      }
+      
+      return () => {
+        eventSource.close()
+      }
+    }
+  }, [callId, callState])
+
   const initiateCall = async (phoneNumber: string) => {
     // Find contact by number or create a new one
     const contact: Contact = {
@@ -83,16 +117,18 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
     // Update call state
     setCallState(CallState.DIALING)
     setCallDuration(0)
+    setIsAIMode(true) // Ensure AI mode is enabled when initiating a call
 
     try {
-      // Simulate API call to initiate call
-      const response = await fetch("/api/calls/outgoing", {
+      // Call the API to initiate the call
+      const response = await fetch("/api/globaltfn/call", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           phoneNumber,
+          useAI: true, // Inform backend that we're using AI mode
         }),
       })
 
@@ -100,6 +136,7 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
 
       if (data.success) {
         console.log("Call initiated successfully:", data)
+        setCallId(data.callId)
 
         // Simulate connecting after 1.5 seconds
         setTimeout(() => {
@@ -110,25 +147,88 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
             setCallState(CallState.ACTIVE)
           }, 2000)
         }, 1500)
+      } else {
+        console.error("Failed to initiate call:", data.message)
+        setCallState(CallState.ENDED)
+        
+        // Reset after 2 seconds
+        setTimeout(() => {
+          resetCallState()
+        }, 2000)
       }
     } catch (error) {
       console.error("Error initiating call:", error)
       setCallState(CallState.ENDED)
+      
+      // Reset after 2 seconds
+      setTimeout(() => {
+        resetCallState()
+      }, 2000)
     }
   }
 
-  const endCall = () => {
+  const endCall = async () => {
+    // Update UI state immediately
     setCallState(CallState.ENDED)
+
+    if (callId) {
+      try {
+        // Notify backend that call is ended by user
+        await fetch("/api/globaltfn/call", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            callId,
+            action: "end"
+          }),
+        })
+      } catch (error) {
+        console.error("Error ending call:", error)
+      }
+    }
 
     // Reset after 2 seconds
     setTimeout(() => {
-      setCallState(CallState.IDLE)
-      setCallDuration(0)
-      setCurrentContact(null)
-      setIsMuted(false)
-      setIsHolding(false)
-      setShowDialpad(false)
+      resetCallState()
     }, 2000)
+  }
+
+  // Reset all call state to initial values
+  const resetCallState = () => {
+    setCallState(CallState.IDLE)
+    setCallDuration(0)
+    setCurrentContact(null)
+    setIsMuted(false)
+    setIsHolding(false)
+    setShowDialpad(false)
+    setCallId(null)
+    setIsAIMode(true) // Reset to AI mode for next call
+  }
+
+  // Toggle AI mode and notify backend
+  const toggleAIMode = async (enabled: boolean) => {
+    setIsAIMode(enabled)
+    
+    if (callId) {
+      try {
+        // Update AI mode status on backend
+        await fetch("/api/globaltfn/call", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            callId,
+            action: "updateAIMode",
+            useAI: enabled
+          }),
+        })
+      } catch (error) {
+        console.error("Error updating AI mode:", error)
+      }
+    }
   }
 
   // Format call duration as mm:ss
@@ -230,7 +330,7 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
               {/* AI Mode toggle (only shown during active call) */}
               {callState === CallState.ACTIVE && (
                 <div className="flex items-center space-x-2 bg-primary/5 rounded-full px-4 py-2">
-                  <Switch id="ai-mode" checked={isAIMode} onCheckedChange={setIsAIMode} />
+                  <Switch id="ai-mode" checked={isAIMode} onCheckedChange={toggleAIMode} />
                   <Label htmlFor="ai-mode" className="cursor-pointer">
                     AI Mode
                   </Label>
