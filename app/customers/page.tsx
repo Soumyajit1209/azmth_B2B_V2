@@ -7,9 +7,9 @@ import { CustomerFilters } from "@/components/customers/customer-filters"
 export default function CustomersPage() {
   return (
     <DashboardShell>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col">
         <div className="flex flex-col md:flex-row gap-4 justify-between">
-          <CustomerSearch />
+          
         </div>
         <CustomerList />
       </div>
