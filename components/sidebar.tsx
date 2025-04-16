@@ -1,8 +1,6 @@
 "use client"
-
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -16,15 +14,24 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
-
+  
+  // Check if current path is the landing page
+  // Assuming '/' is your landing page path
+  const isLandingPage = pathname === '/' || pathname === ''
+  
+  // If it's the landing page, don't render the sidebar
+  if (isLandingPage) {
+    return null
+  }
+  
   const toggleSidebar = () => {
     setIsOpen(!isOpen)
   }
-
+  
   const routes = [
     {
       name: "Dashboard",
-      href: "/",
+      href: "/dashboard",
       icon: Home,
     },
     {
@@ -58,13 +65,12 @@ export function Sidebar({ className }: SidebarProps) {
       icon: FileText,
     },
   ]
-
+  
   return (
     <>
       <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 md:hidden" onClick={toggleSidebar}>
         <Menu className="h-5 w-5" />
       </Button>
-
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r bg-background transition-transform duration-300 ease-in-out md:relative md:translate-x-0",

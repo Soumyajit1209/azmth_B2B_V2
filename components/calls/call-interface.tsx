@@ -70,7 +70,7 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
     }
   }, [callState, isHolding])
 
-  // Set up the event source for server-sent events from the backend
+  
   useEffect(() => {
     if (callId && callState === CallState.ACTIVE) {
       // Listen for server-sent events for call status updates
@@ -82,12 +82,12 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
         if (data.status === "ended") {
           setCallState(CallState.ENDED)
           
-          // Reset after 2 seconds
+          
           setTimeout(() => {
             resetCallState()
           }, 2000)
           
-          // Close the event source
+          
           eventSource.close()
         }
       }
@@ -117,7 +117,7 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
     // Update call state
     setCallState(CallState.DIALING)
     setCallDuration(0)
-    setIsAIMode(true) // Ensure AI mode is enabled when initiating a call
+    setIsAIMode(true) 
 
     try {
       // Call the API to initiate the call
@@ -128,7 +128,7 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
         },
         body: JSON.stringify({
           phoneNumber,
-          useAI: true, // Inform backend that we're using AI mode
+          useAI: true, 
         }),
       })
 
