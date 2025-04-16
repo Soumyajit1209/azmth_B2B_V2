@@ -1,11 +1,18 @@
 import type React from "react"
+import { Urbanist } from 'next/font/google';
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Sidebar } from "@/components/sidebar"
 
-const inter = Inter({ subsets: ["latin"] })
+const urbanist = Urbanist({
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', 'arial'],
+  adjustFontFallback: true
+});
+
 
 export const metadata: Metadata = {
   title: "Modern CRM",
@@ -20,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+       <body className={urbanist.className} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <div className="flex h-screen overflow-hidden">
             <Sidebar />
@@ -33,4 +40,3 @@ export default function RootLayout({
 }
 
 
-import './globals.css'
