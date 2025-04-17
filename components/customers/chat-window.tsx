@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { CalendarIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { AudioPlayer } from "react-audio-play";
 
 interface ChatWindowProps {
   selectedCustomer: {
@@ -136,28 +137,29 @@ export function ChatWindow({ selectedCustomer }: ChatWindowProps) {
                     >
                       {/* Chat Message */}
                       <div
-                        className={`p-2 rounded-lg ${
+                        className={`p-2 rounded-lg cursor-pointer ${
                           chat.sender === "user"
                             ? "bg-white text-black border border-gray-300" // Right-side chat (user)
                             : "bg-black text-white border border-white" // Left-side chat (response)
                         }`}
+                        onClick={() =>
+                          setExpandedChatId(
+                            expandedChatId === `${entry.id}-${index}`
+                              ? null
+                              : `${entry.id}-${index}`
+                          )
+                        }
                       >
                         {chat.message}
                       </div>
 
                       {/* Audio Player */}
-                      <audio
-                        controls
-                        className={`mt-2 ${
-                          chat.sender === "user" ? "self-end" : "self-start"
-                        }`}
-                      >
-                        <source
+                      {expandedChatId === `${entry.id}-${index}` && (
+                        <AudioPlayer
+                          className="custom-style"
                           src="/path/to/dummy-audio.mp3"
-                          type="audio/mpeg"
                         />
-                        Your browser does not support the audio element.
-                      </audio>
+                      )}
                     </div>
                   ))}
                 </div>

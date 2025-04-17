@@ -92,3 +92,27 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+.custom-style.rap-container {
+  background-color: #000000; /* Black background */
+  border: 1px solid #ffffff; /* White border */
+  color: aliceblue;
+}
+
+.custom-style.rap-container .rap-pp-icon path {
+  fill: black;
+}
+
+.custom-style.rap-container .rap-slider .rap-progress {
+  background-color: #daecff;
+}
+
+.custom-style.rap-container .rap-slider .rap-progress .rap-pin {
+  background-color: #c3d5ff;
+  box-shadow: 0 0 9px 7px #269eff52;
+}
+
+.custom-style.rap-container .rap-volume-btn,
+.custom-style.rap-container .rap-time {
+  display: none; /* Remove speaker icon and time */
+}
