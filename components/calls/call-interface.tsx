@@ -121,8 +121,7 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
     setCallDuration(0)
     setIsAIMode(true) 
 
-    try {
-      // Get user data for API call
+    try { 
       const userId = user?.id || null
       const userPhoto = user?.imageUrl || null
       const userName = user?.fullName || user?.username || "Unknown User"
