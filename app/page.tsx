@@ -12,7 +12,6 @@ import { TextGenerateEffect } from "@/components/ui/text-generate-effect"
 import { Button } from "@/components/ui/button"
 import { FloatingNav } from "@/components/ui/floating-navbar"
 import { GlowingStars } from "@/components/ui/glowing-stars"
-import { WavyBackground } from "@/components/ui/wavy-background"
 import { HoverEffect } from "@/components/ui/card-hover-effect"
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip"
 import { TracingBeam } from "@/components/ui/tracing-beam"
@@ -41,11 +40,6 @@ export default function LandingPage() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const router = useRouter()
   const { isSignedIn, user } = useUser()
-
-  // Parallax effect values
-  const y1 = useTransform(scrollYProgress, [0, 1], [0, -100])
-  const y2 = useTransform(scrollYProgress, [0, 1], [0, -200])
-  const y3 = useTransform(scrollYProgress, [0, 1], [0, -300])
 
   // Use a ref to track if the component is mounted to prevent memory leaks
   const isMounted = useRef(true)
@@ -87,13 +81,9 @@ export default function LandingPage() {
     }
   }, []) // Empty dependency array to ensure this only runs once
 
-  // Function to handle dashboard button click
-  const handleDashboardClick = () => {
-    if (isSignedIn) {
-      router.push("/dashboard")
-    } else {
-      toast.error("Please sign in first to access the dashboard.")
-    }
+  // Function to handle app navigation
+  const handleAppNavigation = () => {
+    router.push("/dashboard")
   }
 
   const features = [
@@ -291,23 +281,33 @@ export default function LandingPage() {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 1, duration: 0.8 }}
           >
-            <SpotlightButton 
-              className={`bg-white text-black hover:bg-gray-200 relative overflow-hidden group ${
-                !isSignedIn ? "hover:bg-gray-300" : ""
-              }`}
-              onClick={handleDashboardClick}
-            >
-              <span className="absolute inset-0 bg-gradient-to-r from-gray-200 to-white opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
-              <span className="flex items-center relative z-10">
-                Dashboard <ChevronRight className="ml-2 h-4 w-4" />
-              </span>
-              <span className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-gray-400 to-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
-            </SpotlightButton>
+            {/* Conditional button rendering based on sign-in status */}
+            <SignedIn>
+              <SpotlightButton 
+                className="bg-white text-black hover:bg-gray-200 relative overflow-hidden group"
+                onClick={handleAppNavigation}
+              >
+                <span className="absolute inset-0 bg-gradient-to-r from-gray-200 to-white opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
+                <span className="flex items-center relative z-10">
+                  Go to the App <ChevronRight className="ml-2 h-4 w-4" />
+                </span>
+                <span className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-gray-400 to-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+              </SpotlightButton>
+            </SignedIn>
+            <SignedOut>
+              <SignInButton mode="modal">
+                <SpotlightButton 
+                  className="bg-white text-black hover:bg-gray-200 relative overflow-hidden group"
+                >
+                  <span className="absolute inset-0 bg-gradient-to-r from-gray-200 to-white opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
+                  <span className="flex items-center relative z-10">
+                    Get Started <ChevronRight className="ml-2 h-4 w-4" />
+                  </span>
+                  <span className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-gray-400 to-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+                </SpotlightButton>
+              </SignInButton>
+            </SignedOut>
           </motion.div>
-        </motion.div>
-
-        <motion.div className="absolute bottom-0 left-0 w-full h-32 z-10" style={{ y: y1 }}>
-          <WavyBackground className="w-full h-full opacity-20" />
         </motion.div>
 
         <BackgroundBeams className="opacity-20" />
@@ -391,10 +391,6 @@ export default function LandingPage() {
 
       {/* Card Hover Effect Section */}
       <section className="py-20 bg-black relative">
-        <motion.div className="absolute inset-0 z-0 opacity-30" style={{ y: y2 }}>
-          <WavyBackground className="w-full h-full opacity-10" />
-        </motion.div>
-
         <div className="container px-4 md:px-6 relative z-10">
           <motion.div
             className="text-center mb-16"
@@ -488,10 +484,6 @@ export default function LandingPage() {
 
       {/* Team Section */}
       <section className="py-20 bg-gray-950 relative">
-        <motion.div className="absolute inset-0 z-0 opacity-20" style={{ y: y3 }}>
-          <WavyBackground className="w-full h-full opacity-10" />
-        </motion.div>
-
         <div className="container px-4 md:px-6 relative z-10">
           <motion.div
             className="text-center mb-16"
@@ -540,13 +532,26 @@ export default function LandingPage() {
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              <SpotlightButton className="bg-white text-black hover:bg-gray-200 relative overflow-hidden group">
-                <span className="absolute inset-0 bg-gradient-to-r from-gray-200 to-white opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
-                <Link href="/signup" className="flex items-center relative z-10">
-                  Get Started Today <ChevronRight className="ml-2 h-4 w-4" />
-                </Link>
-                <span className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-gray-400 to-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
-              </SpotlightButton>
+              <SignedIn>
+                <SpotlightButton className="bg-white text-black hover:bg-gray-200 relative overflow-hidden group" onClick={handleAppNavigation}>
+                  <span className="absolute inset-0 bg-gradient-to-r from-gray-200 to-white opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
+                  <span className="flex items-center relative z-10">
+                    Go to the App <ChevronRight className="ml-2 h-4 w-4" />
+                  </span>
+                  <span className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-gray-400 to-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+                </SpotlightButton>
+              </SignedIn>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <SpotlightButton className="bg-white text-black hover:bg-gray-200 relative overflow-hidden group">
+                    <span className="absolute inset-0 bg-gradient-to-r from-gray-200 to-white opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
+                    <span className="flex items-center relative z-10">
+                      Get Started Today <ChevronRight className="ml-2 h-4 w-4" />
+                    </span>
+                    <span className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-gray-400 to-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+                  </SpotlightButton>
+                </SignInButton>
+              </SignedOut>
             </motion.div>
           </motion.div>
         </div>
@@ -568,8 +573,3 @@ export default function LandingPage() {
     </div>
   )
 }
-
-// You would define page protection with Next.js middleware or route handlers instead:
-// For middleware approach, create a middleware.js file in the root:
-// export { default } from '@clerk/nextjs/middleware';
-// export const config = { matcher: ['/dashboard(.*)'] };

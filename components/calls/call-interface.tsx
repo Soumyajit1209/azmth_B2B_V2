@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useUser } from "@clerk/nextjs" // Import the useUser hook from Clerk
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -45,6 +46,9 @@ interface CallInterfaceProps {
 }
 
 export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterfaceProps) {
+  // Get Clerk user data
+  const { user } = useUser()
+  
   const [callState, setCallState] = useState<CallState>(CallState.IDLE)
   const [isMuted, setIsMuted] = useState(false)
   const [isSpeakerOn, setIsSpeakerOn] = useState(true)
@@ -82,11 +86,9 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
         if (data.status === "ended") {
           setCallState(CallState.ENDED)
           
-          
           setTimeout(() => {
             resetCallState()
           }, 2000)
-          
           
           eventSource.close()
         }
@@ -120,7 +122,12 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
     setIsAIMode(true) 
 
     try {
-      // Call the API to initiate the call
+      // Get user data for API call
+      const userId = user?.id || null
+      const userPhoto = user?.imageUrl || null
+      const userName = user?.fullName || user?.username || "Unknown User"
+
+      // Call the API to initiate the call with user data
       const response = await fetch("/api/globaltfn/call", {
         method: "POST",
         headers: {
@@ -128,7 +135,10 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
         },
         body: JSON.stringify({
           phoneNumber,
-          useAI: true, 
+          useAI: true,
+          userId,
+          userPhoto,
+          userName
         }),
       })
 
@@ -181,7 +191,8 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
           },
           body: JSON.stringify({
             callId,
-            action: "end"
+            action: "end",
+            userId: user?.id || null, // Include userId here too
           }),
         })
       } catch (error) {
@@ -222,7 +233,8 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
           body: JSON.stringify({
             callId,
             action: "updateAIMode",
-            useAI: enabled
+            useAI: enabled,
+            userId: user?.id || null, // Include userId here too
           }),
         })
       } catch (error) {

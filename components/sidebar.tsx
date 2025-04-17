@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { BarChart3, Calendar, FileText, Home, Mic, Phone, Users, Menu, X } from "lucide-react"
+import { UserButton } from "@clerk/nextjs"
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -88,7 +89,7 @@ export function Sidebar({ className }: SidebarProps) {
           </Button>
         </div>
         <ScrollArea className="flex-1 py-2">
-          <nav className="grid gap-1 px-2">
+          <nav className="grid gap-3 px-2">
             {routes.map((route) => (
               <Link
                 key={route.href}
@@ -106,7 +107,10 @@ export function Sidebar({ className }: SidebarProps) {
           </nav>
         </ScrollArea>
         <div className="border-t p-4">
-          <ThemeToggle />
+          <div className="flex items-center justify-between">
+            <ThemeToggle />
+            <UserButton afterSignOutUrl="/" />
+          </div>
         </div>
       </aside>
     </>
