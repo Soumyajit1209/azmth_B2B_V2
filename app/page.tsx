@@ -259,19 +259,19 @@ export default function LandingPage() {
               particleColor="#FFFFFF"
             />
             <motion.h1
-              className="absolute inset-0 flex items-center justify-center text-5xl md:text-7xl font-bold tracking-tighter pt-56"
+              className="absolute inset-0 flex items-center justify-center text-[200px] font-semibold tracking-tighter pt-56"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.5, duration: 0.8 }}
             >
-              azmth CRM
+              azmth
             </motion.h1>
           </motion.div>
 
           <div className="max-w-3xl mx-auto mt-8 pt-32">
             <TextGenerateEffect
-              words="Transform your customer relationships with our intelligent CRM platform. Designed for modern businesses."
-              className="text-xl md:text-2xl text-gray-300 mb-8"
+              words="The Smartest AI CRM is here ."
+              className="text-xl md:text-2xl text-gray-300 mb-8 pt-8"
             />
           </div>
 
@@ -284,7 +284,7 @@ export default function LandingPage() {
             {/* Conditional button rendering based on sign-in status */}
             <SignedIn>
               <SpotlightButton 
-                className="bg-white text-black hover:bg-gray-200 relative overflow-hidden group"
+                className="bg-white text-black hover:bg-gray-200 relative overflow-hidden group top-[-40px]"
                 onClick={handleAppNavigation}
               >
                 <span className="absolute inset-0 bg-gradient-to-r from-gray-200 to-white opacity-0 group-hover:opacity-20 transition-opacity duration-500" />

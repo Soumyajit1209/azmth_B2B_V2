@@ -1,9 +1,17 @@
+import type { Metadata } from "next"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { OverviewStats } from "@/components/dashboard/overview-stats"
 import { RecentActivity } from "@/components/dashboard/recent-activity"
 import { SalesChart } from "@/components/dashboard/sales-chart"
 import { UpcomingCalls } from "@/components/dashboard/upcoming-calls"
+
+export const metadata: Metadata = {
+  title: "Dashboard-azmth CRM",
+  description: "azmth CRM is a powerful and user-friendly customer relationship management tool designed to help businesses manage their interactions with customers and streamline their sales processes.",
+  
+}
+
 
 export default function DashboardPage() {
   return (

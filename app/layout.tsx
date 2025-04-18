@@ -16,9 +16,9 @@ const urbanist = Urbanist({
 
 
 export const metadata: Metadata = {
-  title: "Modern CRM",
-  description: "A modern CRM application with voice cloning and AI features",
-    generator: 'v0.dev'
+  title: "azmth CRM",
+  description: "azmth CRM is a powerful and user-friendly customer relationship management tool designed to help businesses manage their interactions with customers and streamline their sales processes.",
+  
 }
 
 export default function RootLayout({

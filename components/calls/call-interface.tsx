@@ -25,6 +25,8 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+import { ScrollArea } from "@/components/ui/scroll-area"
+
 enum CallState {
   IDLE = "idle",
   DIALING = "dialing",
@@ -40,15 +42,39 @@ interface Contact {
   avatar?: string
 }
 
+// Add a new interface for transcript messages after the Contact interface
+interface TranscriptMessage {
+  id: string
+  text: string
+  timestamp: string
+  speaker: "user" | "caller" | "ai"
+}
+
 interface CallInterfaceProps {
   isDialPadOpen: boolean
   setIsDialPadOpen: (isOpen: boolean) => void
 }
 
+// Mock transcript messages for when we're in offline/fallback mode
+const mockTranscriptMessages = [
+  {
+    text: "Hello, how can I help you today?",
+    speaker: "ai" as const,
+  },
+  {
+    text: "I'd like to inquire about your services.",
+    speaker: "caller" as const,
+  },
+  {
+    text: "I'd be happy to provide information about our services. What specific details are you looking for?",
+    speaker: "ai" as const,
+  },
+]
+
 export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterfaceProps) {
   // Get Clerk user data
   const { user } = useUser()
-  
+
   const [callState, setCallState] = useState<CallState>(CallState.IDLE)
   const [isMuted, setIsMuted] = useState(false)
   const [isSpeakerOn, setIsSpeakerOn] = useState(true)
@@ -58,6 +84,9 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
   const [showDialpad, setShowDialpad] = useState(false)
   const [currentContact, setCurrentContact] = useState<Contact | null>(null)
   const [callId, setCallId] = useState<string | null>(null)
+  const [isOfflineMode, setIsOfflineMode] = useState(false) // New state to track offline mode
+  // Add transcript state to the component
+  const [transcript, setTranscript] = useState<TranscriptMessage[]>([])
 
   // Handle call duration timer
   useEffect(() => {
@@ -74,42 +103,138 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
     }
   }, [callState, isHolding])
 
-  
+  // Handle call events - with fallback for when callId is missing
   useEffect(() => {
-    if (callId && callState === CallState.ACTIVE) {
-      // Listen for server-sent events for call status updates
-      const eventSource = new EventSource(`/api/globaltfn/call/events?callId=${callId}`)
-      
-      eventSource.onmessage = (event) => {
-        const data = JSON.parse(event.data)
-        
-        if (data.status === "ended") {
-          setCallState(CallState.ENDED)
-          
-          setTimeout(() => {
-            resetCallState()
-          }, 2000)
-          
-          eventSource.close()
+    if (callState === CallState.ACTIVE) {
+      let eventSource: EventSource | undefined
+
+      if (callId) {
+        // Online mode with real backend events
+        try {
+          eventSource = new EventSource(`/api/globaltfn/call/events?callId=${callId}`)
+
+          eventSource.onmessage = (event) => {
+            const data = JSON.parse(event.data)
+
+            if (data.status === "ended") {
+              setCallState(CallState.ENDED)
+
+              setTimeout(() => {
+                resetCallState()
+              }, 2000)
+
+              if (eventSource) eventSource.close()
+            }
+          }
+
+          eventSource.onerror = () => {
+            console.error("Error with event source connection, falling back to offline mode")
+            if (eventSource) eventSource.close()
+            setIsOfflineMode(true)
+          }
+        } catch (error) {
+          console.error("Failed to establish event source connection:", error)
+          setIsOfflineMode(true)
         }
+      } else {
+        // No callId - use offline mode
+        setIsOfflineMode(true)
+        console.log("No callId available - running in offline mode")
       }
-      
-      eventSource.onerror = () => {
-        console.error("Error with event source connection")
-        eventSource.close()
-      }
-      
+
       return () => {
-        eventSource.close()
+        if (eventSource) eventSource.close()
       }
     }
   }, [callId, callState])
+
+  // Transcript handling with offline mode fallback
+  useEffect(() => {
+    if (callState === CallState.ACTIVE) {
+      let transcriptSource: EventSource | undefined
+      let mockInterval: NodeJS.Timeout | undefined
+
+      // Only try to connect to real backend if we have a callId and are not in offline mode
+      if (callId && !isOfflineMode) {
+        try {
+          transcriptSource = new EventSource(`/api/globaltfn/call/transcript?callId=${callId}`)
+
+          transcriptSource.onmessage = (event) => {
+            const data = JSON.parse(event.data)
+
+            if (data.message) {
+              setTranscript((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString(),
+                  text: data.message.text,
+                  timestamp: new Date().toISOString(),
+                  speaker: data.message.speaker,
+                },
+              ])
+            }
+          }
+
+          transcriptSource.onerror = () => {
+            console.error("Error with transcript event source connection, falling back to mock data")
+            if (transcriptSource) transcriptSource.close()
+            setIsOfflineMode(true)
+            simulateMockTranscript()
+          }
+        } catch (error) {
+          console.error("Failed to establish transcript event source:", error)
+          setIsOfflineMode(true)
+          simulateMockTranscript()
+        }
+      } else if (callState === CallState.ACTIVE) {
+        // If we're in offline mode or don't have a callId, simulate transcript with mock data
+        simulateMockTranscript()
+      }
+
+      // Function to simulate mock transcript data
+      function simulateMockTranscript() {
+        // Only add initial message if transcript is empty
+        if (transcript.length === 0) {
+          // Add initial AI greeting
+          setTranscript([
+            {
+              id: Date.now().toString(),
+              text: "Hello, how can I help you today?",
+              timestamp: new Date().toISOString(),
+              speaker: "ai",
+            },
+          ])
+        }
+
+        // Set up interval to add mock messages every 8-15 seconds if in AI mode
+        mockInterval = setInterval(() => {
+          if (isAIMode && !isHolding && callState === CallState.ACTIVE) {
+            const randomMessage = mockTranscriptMessages[Math.floor(Math.random() * mockTranscriptMessages.length)]
+            setTranscript((prev) => [
+              ...prev,
+              {
+                id: Date.now().toString(),
+                text: randomMessage.text,
+                timestamp: new Date().toISOString(),
+                speaker: randomMessage.speaker,
+              },
+            ])
+          }
+        }, Math.random() * 7000 + 8000) // Random interval between 8-15 seconds
+      }
+
+      return () => {
+        if (transcriptSource) transcriptSource.close()
+        if (mockInterval) clearInterval(mockInterval)
+      }
+    }
+  }, [callId, callState, isOfflineMode, isAIMode, isHolding, transcript.length])
 
   const initiateCall = async (phoneNumber: string) => {
     // Find contact by number or create a new one
     const contact: Contact = {
       id: "unknown",
-      name: "Unknown",
+      name: phoneNumber.length > 3 ? `Caller (${phoneNumber})` : "Unknown",
       number: phoneNumber,
     }
 
@@ -119,56 +244,61 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
     // Update call state
     setCallState(CallState.DIALING)
     setCallDuration(0)
-    setIsAIMode(true) 
+    setIsAIMode(true)
+    setTranscript([]) // Clear transcript for new call
 
-    try { 
+    try {
       const userId = user?.id || null
       const userPhoto = user?.imageUrl || null
       const userName = user?.fullName || user?.username || "Unknown User"
 
-      // Call the API to initiate the call with user data
-      const response = await fetch("/api/globaltfn/call", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          phoneNumber,
-          useAI: true,
-          userId,
-          userPhoto,
-          userName
-        }),
-      })
+      // Try to call the backend API, but handle the case where it might fail
+      try {
+        // Call the API to initiate the call with user data
+        const response = await fetch(`https://eba4-49-37-35-224.ngrok-free.app/initiate-call/${phoneNumber}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            // phoneNumber,
+            useAI: true,
+            userId,
+            userPhoto,
+            userName,
+          }),
+        })
 
-      const data = await response.json()
+        const data = await response.json()
 
-      if (data.success) {
-        console.log("Call initiated successfully:", data)
-        setCallId(data.callId)
-
-        // Simulate connecting after 1.5 seconds
-        setTimeout(() => {
-          setCallState(CallState.CONNECTING)
-
-          // Simulate connected after another 2 seconds
-          setTimeout(() => {
-            setCallState(CallState.ACTIVE)
-          }, 2000)
-        }, 1500)
-      } else {
-        console.error("Failed to initiate call:", data.message)
-        setCallState(CallState.ENDED)
-        
-        // Reset after 2 seconds
-        setTimeout(() => {
-          resetCallState()
-        }, 2000)
+        if (data.success) {
+          console.log("Call initiated successfully:", data)
+          setCallId(data.callId)
+          setIsOfflineMode(false)
+        } else {
+          console.warn("Backend response indicated failure, running in offline mode:", data.message)
+          setCallId(generateMockCallId())
+          setIsOfflineMode(true)
+        }
+      } catch (error) {
+        console.warn("Could not reach backend, running in offline mode:", error)
+        setCallId(generateMockCallId())
+        setIsOfflineMode(true)
       }
+
+      // Simulate connecting after 1.5 seconds (whether online or offline)
+      setTimeout(() => {
+        setCallState(CallState.CONNECTING)
+
+        // Simulate connected after another 2 seconds
+        setTimeout(() => {
+          setCallState(CallState.ACTIVE)
+        }, 2000)
+      }, 1500)
     } catch (error) {
-      console.error("Error initiating call:", error)
+      console.error("Error during call setup:", error)
       setCallState(CallState.ENDED)
-      
+
       // Reset after 2 seconds
       setTimeout(() => {
         resetCallState()
@@ -176,11 +306,17 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
     }
   }
 
+  // Generate a mock call ID for offline mode
+  const generateMockCallId = () => {
+    return `mock-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+  }
+
   const endCall = async () => {
     // Update UI state immediately
     setCallState(CallState.ENDED)
 
-    if (callId) {
+    // Only try to notify backend if we have a real callId and are not in offline mode
+    if (callId && !isOfflineMode) {
       try {
         // Notify backend that call is ended by user
         await fetch("/api/globaltfn/call", {
@@ -191,11 +327,11 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
           body: JSON.stringify({
             callId,
             action: "end",
-            userId: user?.id || null, // Include userId here too
+            userId: user?.id || null, 
           }),
         })
       } catch (error) {
-        console.error("Error ending call:", error)
+        console.error("Error ending call on backend:", error)
       }
     }
 
@@ -215,13 +351,39 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
     setShowDialpad(false)
     setCallId(null)
     setIsAIMode(true) // Reset to AI mode for next call
+    setIsOfflineMode(false) // Reset offline mode flag
+    setTranscript([]) // Clear transcript
   }
 
-  // Toggle AI mode and notify backend
+  // Toggle AI mode and notify backend if possible
   const toggleAIMode = async (enabled: boolean) => {
     setIsAIMode(enabled)
-    
-    if (callId) {
+
+    // Add user message to transcript when toggling AI mode off
+    if (!enabled) {
+      setTranscript(prev => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          text: "Taking over the call manually...",
+          timestamp: new Date().toISOString(),
+          speaker: "user",
+        }
+      ]);
+    } else {
+      setTranscript(prev => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          text: "AI assistant is now handling the call.",
+          timestamp: new Date().toISOString(),
+          speaker: "ai",
+        }
+      ]);
+    }
+
+    // Only notify backend if we have a real callId and are not in offline mode
+    if (callId && !isOfflineMode) {
       try {
         // Update AI mode status on backend
         await fetch("/api/globaltfn/call", {
@@ -233,23 +395,21 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
             callId,
             action: "updateAIMode",
             useAI: enabled,
-            userId: user?.id || null, // Include userId here too
+            userId: user?.id || null,
           }),
         })
       } catch (error) {
-        console.error("Error updating AI mode:", error)
+        console.error("Error updating AI mode on backend:", error)
       }
     }
   }
 
-  // Format call duration as mm:ss
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
   }
 
-  // Get status text based on call state
   const getStatusText = () => {
     switch (callState) {
       case CallState.DIALING:
@@ -262,6 +422,25 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
         return "Call Ended"
       default:
         return ""
+    }
+  }
+
+  // Allow the user to manually add a transcript message (useful in offline mode)
+  const addUserMessage = () => {
+    if (callState === CallState.ACTIVE && !isAIMode) {
+      // In a real app, this would open a dialog or prompt
+      const message = prompt("Enter your message to the caller:");
+      if (message && message.trim()) {
+        setTranscript(prev => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            text: message.trim(),
+            timestamp: new Date().toISOString(),
+            speaker: "user",
+          }
+        ]);
+      }
     }
   }
 
@@ -291,8 +470,6 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
       </>
     )
   }
-
-  // Render the active call interface (Android-like)
   return (
     <>
       <DialPad
@@ -313,17 +490,24 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
           <div className="flex flex-col min-h-[500px]">
             {/* Call header with status */}
             <div className="bg-primary/10 p-4 text-center">
-              <Badge
-                variant="outline"
-                className={cn(
-                  "px-3 py-1 text-sm",
-                  callState === CallState.ACTIVE && !isHolding && "bg-green-500/20 text-green-500 border-green-500/30",
-                  isHolding && "bg-amber-500/20 text-amber-500 border-amber-500/30",
-                  callState === CallState.ENDED && "bg-red-500/20 text-red-500 border-red-500/30",
+              <div className="flex items-center justify-center gap-2">
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "px-3 py-1 text-sm",
+                    callState === CallState.ACTIVE && !isHolding && "bg-green-500/20 text-green-500 border-green-500/30",
+                    isHolding && "bg-amber-500/20 text-amber-500 border-amber-500/30",
+                    callState === CallState.ENDED && "bg-red-500/20 text-red-500 border-red-500/30",
+                  )}
+                >
+                  {getStatusText()}
+                </Badge>
+                {isOfflineMode && callState === CallState.ACTIVE && (
+                  <Badge variant="outline" className="bg-blue-500/20 text-blue-500 border-blue-500/30 px-2 py-1 text-xs">
+                    Offline Mode
+                  </Badge>
                 )}
-              >
-                {getStatusText()}
-              </Badge>
+              </div>
             </div>
 
             {/* Contact info */}
@@ -352,6 +536,86 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
                 </div>
               )}
             </div>
+
+            {callState === CallState.ACTIVE && (
+              <div className="px-4 pb-2 mb-2">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm font-medium">Live Transcript</div>
+                  <div className="flex items-center gap-2">
+                    {!isAIMode && (
+                      <Button size="sm" variant="ghost" onClick={addUserMessage} className="text-xs h-6 px-2 py-0">
+                        Add Message
+                      </Button>
+                    )}
+                    <Badge variant="outline" className="text-xs">
+                      {transcript.length} messages
+                    </Badge>
+                  </div>
+                </div>
+                <Card className="overflow-hidden border bg-background/95">
+                  <ScrollArea className="h-[200px]">
+                    {transcript.length === 0 ? (
+                      <div className="flex items-center justify-center h-full text-muted-foreground text-sm p-4">
+                        <Bot className="mr-2 h-4 w-4 opacity-50" />
+                        Waiting for conversation...
+                      </div>
+                    ) : (
+                      <div className="p-3">
+                        {transcript.map((message) => (
+                          <div
+                            key={message.id}
+                            className={cn(
+                              "py-2 px-3 rounded-lg mb-2 max-w-[85%]",
+                              message.speaker === "ai"
+                                ? "bg-primary/10 ml-auto"
+                                : message.speaker === "user"
+                                  ? "bg-secondary/20 mr-auto"
+                                  : "bg-muted mr-auto",
+                            )}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <div
+                                className={cn(
+                                  "flex items-center justify-center w-5 h-5 rounded-full",
+                                  message.speaker === "ai"
+                                    ? "bg-primary text-primary-foreground"
+                                    : message.speaker === "user"
+                                      ? "bg-secondary text-secondary-foreground"
+                                      : "bg-muted-foreground text-muted",
+                                )}
+                              >
+                                {message.speaker === "ai" ? (
+                                  <Bot className="h-3 w-3" />
+                                ) : message.speaker === "user" ? (
+                                  <User className="h-3 w-3" />
+                                ) : (
+                                  <Phone className="h-3 w-3" />
+                                )}
+                              </div>
+                              <span className="text-xs font-medium">
+                                {message.speaker === "ai"
+                                  ? "AI Assistant"
+                                  : message.speaker === "user"
+                                    ? "You"
+                                    : "Caller"}
+                              </span>
+                              <span className="text-xs text-muted-foreground ml-auto">
+                                {new Date(message.timestamp).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  second: "2-digit",
+                                })}
+                              </span>
+                            </div>
+                            <p className="text-sm">{message.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+                </Card>
+              </div>
+            )}
 
             {/* Call actions */}
             <div className="p-6 bg-primary/5">

@@ -1,34 +1,41 @@
-"use client"
-import type React from "react"
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { BarChart3, Calendar, FileText, Home, Mic, Phone, Users, Menu, X } from "lucide-react"
-import { UserButton } from "@clerk/nextjs"
+"use client";
+import type React from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ThemeToggle } from "@/components/theme-toggle";
+import {
+  BarChart3,
+  Calendar,
+  FileText,
+  Home,
+  Mic,
+  Phone,
+  Users,
+  Menu,
+  X,
+} from "lucide-react";
+import { UserButton } from "@clerk/nextjs";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 export function Sidebar({ className }: SidebarProps) {
-  const pathname = usePathname()
-  const [isOpen, setIsOpen] = useState(false)
-  
-  // Check if current path is the landing page
-  // Assuming '/' is your landing page path
-  const isLandingPage = pathname === '/' || pathname === ''
-  
-  // If it's the landing page, don't render the sidebar
+  const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const isLandingPage = pathname === "/" || pathname === "";
+
   if (isLandingPage) {
-    return null
+    return null;
   }
-  
+
   const toggleSidebar = () => {
-    setIsOpen(!isOpen)
-  }
-  
+    setIsOpen(!isOpen);
+  };
+
   const routes = [
     {
       name: "Dashboard",
@@ -65,26 +72,41 @@ export function Sidebar({ className }: SidebarProps) {
       href: "/documents",
       icon: FileText,
     },
-  ]
-  
+  ];
+
   return (
     <>
-      <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 md:hidden" onClick={toggleSidebar}>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed top-4 left-4 z-50 md:hidden"
+        onClick={toggleSidebar}
+      >
         <Menu className="h-5 w-5" />
       </Button>
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r bg-background transition-transform duration-300 ease-in-out md:relative md:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full",
-          className,
+          className
         )}
       >
+      
         <div className="flex h-14 items-center border-b px-4">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
-            <span className="h-6 w-6 rounded-full bg-primary" />
-            <span>Modern CRM</span>
-          </Link>
-          <Button variant="ghost" size="icon" className="ml-auto md:hidden" onClick={toggleSidebar}>
+        <Link href="/" className="flex items-center gap-2 font-semibold">
+        <div className="relative flex items-center">
+          <div className="w-20 h-8 bg-white rounded-lg flex items-center justify-center">
+            <span className="text-black font-semibold text-lg">azmth</span>
+          </div>
+          <span className="ml-2 text-gray-300 text-foreground">CRM</span>
+        </div>
+      </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="ml-auto md:hidden"
+            onClick={toggleSidebar}
+          >
             <X className="h-5 w-5" />
           </Button>
         </div>
@@ -97,7 +119,9 @@ export function Sidebar({ className }: SidebarProps) {
                 onClick={() => setIsOpen(false)}
                 className={cn(
                   "group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                  pathname === route.href ? "bg-accent text-accent-foreground" : "transparent",
+                  pathname === route.href
+                    ? "bg-accent text-accent-foreground"
+                    : "transparent"
                 )}
               >
                 <route.icon className="h-5 w-5" />
@@ -114,5 +138,5 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
       </aside>
     </>
-  )
+  );
 }
