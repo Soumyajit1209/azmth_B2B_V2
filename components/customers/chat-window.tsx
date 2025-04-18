@@ -117,11 +117,15 @@ export function ChatWindow({ selectedCustomer }: ChatWindowProps) {
           <Accordion type="single" collapsible key={entry.id}>
             <AccordionItem value={entry.id}>
               <AccordionTrigger className="hover:bg-transparent">
-                <div className="flex items-center space-x-2">
-                  <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                  <span className="font-medium">{formatDate(entry.date)}</span>
-                  <ClockIcon className="h-5 w-5 text-muted-foreground ml-4" />
-                  <span className="font-medium">{entry.time}</span>
+                <div className="flex flex-col items-start space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+                    <span className="font-medium">{formatDate(entry.date)}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <ClockIcon className="h-5 w-5 text-muted-foreground" />
+                    <span className="font-medium">{entry.time}</span>
+                  </div>
                 </div>
                 <br />
                 <span className="font-medium opacity-50">{entry.summary}</span>
