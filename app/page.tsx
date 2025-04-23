@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { motion, useScroll, useTransform } from "framer-motion"
 import { SparklesCore } from "@/components/ui/sparkles"
@@ -31,7 +30,6 @@ import {
   UserPlus,
   Mail,
 } from "lucide-react"
-import { toast } from "sonner"
 
 export default function LandingPage() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
@@ -79,9 +77,7 @@ export default function LandingPage() {
       window.removeEventListener("mousemove", throttledHandleMouseMove)
       if (timeoutId) clearTimeout(timeoutId)
     }
-  }, []) // Empty dependency array to ensure this only runs once
-
-  // Function to handle app navigation
+  }, []) 
   const handleAppNavigation = () => {
     router.push("/dashboard")
   }
@@ -136,22 +132,17 @@ export default function LandingPage() {
   const team = [
     {
       id: 1,
-      name: "Sarah Johnson",
-      designation: "CEO & Founder",
+      name: "Dron Guin",
+      designation: "Founder",
       image: "/placeholder.svg?height=100&width=100",
     },
     {
       id: 2,
-      name: "Michael Chen",
-      designation: "CTO",
+      name: "Priyanshu Singh",
+      designation: "CEO",
       image: "/placeholder.svg?height=100&width=100",
     },
-    {
-      id: 3,
-      name: "Emily Rodriguez",
-      designation: "Head of Design",
-      image: "/placeholder.svg?height=100&width=100",
-    },
+    
   ]
 
   const cards = [
@@ -564,7 +555,7 @@ export default function LandingPage() {
         <div className="container px-4 md:px-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-6 md:mb-0">
-              <h3 className="text-xl font-bold">Azmth CRM</h3>
+              <h3 className="text-xl font-bold">azmth CRM</h3>
               <p className="text-gray-400 mt-2">© {new Date().getFullYear()} All rights reserved.</p>
             </div>
           </div>
