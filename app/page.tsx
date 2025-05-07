@@ -194,7 +194,7 @@ export default function LandingPage() {
           />
         </SignedIn>
         <SignedOut>
-          <SignInButton mode="modal">
+          <SignInButton forceRedirectUrl="/auth-callback" mode="modal">
             <Button 
               variant="outline" 
               className="border-gray-700 hover:bg-gray-900 relative overflow-hidden group"
