@@ -10,6 +10,7 @@ export default clerkMiddleware((auth, req) => {
     '/calls',
     '/customers',
     '/calendar',
+    '/create-call'
   ];
   
   // Check if the current path matches any protected route
