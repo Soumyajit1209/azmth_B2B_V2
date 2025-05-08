@@ -49,9 +49,9 @@ export default function CallDetailModal({
           key={index}
           className={`mb-3 p-3 rounded-lg ${
             isAI
-              ? "bg-blue-50 border-l-4 border-blue-500"
+              ? " border-l-4 border-blue-500"
               : isUser
-              ? "bg-gray-50 border-l-4 border-gray-400"
+              ? " border-l-4 border-gray-400"
               : ""
           }`}
         >
@@ -232,7 +232,7 @@ export default function CallDetailModal({
                   <MessageSquare className="h-5 w-5 text-primary" />
                   Call Summary
                 </h3>
-                <div className="p-4 bg-gray-50 rounded-lg border">
+                <div className="p-4 rounded-lg border">
                   <p className="text-sm whitespace-pre-line">{call.summary}</p>
                 </div>
               </div>
@@ -244,7 +244,7 @@ export default function CallDetailModal({
                   <MessageSquare className="h-5 w-5 text-primary" />
                   Full Transcript
                 </h3>
-                <div className="border rounded-lg p-4 bg-gray-50">
+                <div className="border rounded-lg p-4 ">
                   <div className="space-y-3">
                     {formatTranscript(call.transcript)}
                   </div>

@@ -5,20 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Phone,
   PhoneIncoming,
   PhoneOutgoing,
   PhoneMissed,
   Bot,
-  Clock,
-  Calendar,
-  MessageSquare,
-  User,
   RefreshCw
 } from "lucide-react";
 import { formatDuration, formatDate, getStatusBadge } from "@/lib/utils";
-import CallDetailModal from "@/components/call-detail-modal"
+import CallDetailModal from "@/components/call-detail-modal";
 import { CallRecord } from "@/types/interfaces";
 
 export function CallHistory() {
@@ -27,10 +24,26 @@ export function CallHistory() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCall, setSelectedCall] = useState<CallRecord | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchCalls();
   }, []);
+
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredCalls(calls);
+    } else {
+      const lowerCaseQuery = searchQuery.toLowerCase();
+      setFilteredCalls(
+        calls.filter(
+          (call) =>
+            call.customer?.name?.toLowerCase().includes(lowerCaseQuery) ||
+            call.customer?.number?.toLowerCase().includes(lowerCaseQuery)
+        )
+      );
+    }
+  }, [searchQuery, calls]);
 
   const fetchCalls = async () => {
     const loadingState = calls.length > 0 ? setIsRefreshing : setIsLoading;
@@ -69,13 +82,15 @@ export function CallHistory() {
     if (call.endedReason === "customer-did-not-answer") {
       return <PhoneMissed className="h-4 w-4 text-destructive" />;
     }
-    
+
     // Check if it's inbound or outbound (you may need to adjust based on actual data structure)
     const isInbound = call.direction === "inbound";
-    
-    return isInbound ? 
-      <PhoneIncoming className="h-4 w-4 text-primary" /> : 
-      <PhoneOutgoing className="h-4 w-4 text-primary" />;
+
+    return isInbound ? (
+      <PhoneIncoming className="h-4 w-4 text-primary" />
+    ) : (
+      <PhoneOutgoing className="h-4 w-4 text-primary" />
+    );
   };
 
   // Format date for display in list
@@ -88,11 +103,11 @@ export function CallHistory() {
   // Get call duration in mm:ss format
   const getCallDuration = (startedAt: string, endedAt: string) => {
     if (!startedAt || !endedAt) return "00:00";
-    
+
     const start = new Date(startedAt).getTime();
     const end = new Date(endedAt).getTime();
     const durationInSeconds = Math.floor((end - start) / 1000);
-    
+
     const mins = Math.floor(durationInSeconds / 60);
     const secs = durationInSeconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
@@ -100,18 +115,26 @@ export function CallHistory() {
 
   return (
     <Card className="h-[600px] flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col items-center justify-between">
+        <div className="flex items-center justify-between w-full mb-4 ">
         <CardTitle>Call History</CardTitle>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="gap-1"
-          onClick={fetchCalls}
-          disabled={isLoading || isRefreshing}
-        >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
-          <span className="text-xs">Refresh</span>
-        </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1"
+            onClick={fetchCalls}
+            disabled={isLoading || isRefreshing}
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+            <span className="text-xs">Refresh</span>
+          </Button>
+        </div>
+          <Input
+            placeholder="Search by name or number"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-64"
+          />
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
         {isLoading ? (
@@ -125,9 +148,9 @@ export function CallHistory() {
             <p className="text-sm text-muted-foreground mb-4">
               No call records available. Initiate calls to see records here.
             </p>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={fetchCalls}
               className="gap-2"
             >
@@ -141,7 +164,7 @@ export function CallHistory() {
               {filteredCalls.map((call) => (
                 <div
                   key={call.id}
-                  className="flex items-center justify-between space-x-4 rounded-md border p-3 hover:bg-accent transition-colors cursor-pointer"
+                  className="flex-col items-center justify-between space-x-4 rounded-md border p-3 hover:bg-accent transition-colors cursor-pointer"
                   onClick={() => handleCardClick(call)}
                 >
                   <div className="flex items-center space-x-4">
@@ -153,7 +176,8 @@ export function CallHistory() {
                         {call.customer?.name || "Unknown Caller"}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {call.customer?.number || "N/A"} • {formatCallTime(call.startedAt || call.createdAt)}
+                        {call.customer?.number || "N/A"} •{" "}
+                        {formatCallTime(call.startedAt || call.createdAt)}
                       </div>
                     </div>
                   </div>
@@ -180,10 +204,8 @@ export function CallHistory() {
           </ScrollArea>
         )}
       </CardContent>
-      
-      {selectedCall && (
-        <CallDetailModal call={selectedCall} onClose={closeModal} />
-      )}
+
+      {selectedCall && <CallDetailModal call={selectedCall} onClose={closeModal} />}
     </Card>
   );
 }
