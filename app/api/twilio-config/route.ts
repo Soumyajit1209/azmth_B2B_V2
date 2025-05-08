@@ -1,7 +1,45 @@
+// app/api/twilio-config/route.ts
 import User from '@/modals/User';
 import { NextRequest, NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import connectDB from '@/lib/connectDB';
+
+export async function GET(request: NextRequest) {
+  try {
+    console.log('Connecting to the database...');
+    await connectDB();
+    console.log('Database connected successfully.');
+
+    // Get user from Clerk
+    console.log('Fetching current user...');
+    const ClerkUser = await currentUser();
+    const clerkId = ClerkUser?.id;
+    console.log('Current user fetched:', { clerkId });
+
+    if (!clerkId) {
+      console.error('Unauthorized access: Clerk ID not found.');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Find user in database
+    console.log('Finding user in database...');
+    const user = await User.findOne({ clerkId });
+    console.log('User found:', user ? 'Yes' : 'No');
+
+    if (!user) {
+      return NextResponse.json({ twilioConfig: null });
+    }
+
+    // Return the Twilio configuration
+    return NextResponse.json({ 
+      twilioConfig: user.twilioConfig || null,
+      assistantId: user.assistantId || null
+    });
+  } catch (error) {
+    console.error('Error retrieving Twilio configuration:', error);
+    return NextResponse.json({ error: 'Failed to retrieve Twilio configuration' }, { status: 500 });
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,7 +75,14 @@ export async function POST(request: NextRequest) {
         }
       );
 
-      const assistantId = await response.json();
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error creating assistant:', errorData);
+        throw new Error('Failed to create assistant');
+      }
+
+      const responseData = await response.json();
+      assistantId = responseData.assistantId;
       if (!assistantId) {
         throw new Error('assistantId missing in response');
       }
@@ -82,23 +127,24 @@ export async function POST(request: NextRequest) {
     const user = await User.findOneAndUpdate(
       { clerkId },
       {
-        twilioConfig: {
-          sid,
-          authToken,
-          phoneNumber
-        },
-        assistantId
+        $set: {
+          twilioConfig: {
+            sid,
+            authToken,
+            phoneNumber
+          },
+          assistantId
+        }
       },
+      { new: true, upsert: true }
     );
     console.log('Twilio configuration updated:', user);
 
-    if (!user) {
-      console.error('User not found for Clerk ID:', clerkId);
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
     console.log('Twilio configuration updated and assistant created successfully.');
-    return NextResponse.json({ message: 'Twilio configuration updated and assistant created successfully' });
+    return NextResponse.json({ 
+      message: 'Twilio configuration updated and assistant created successfully',
+      assistantId
+    });
   } catch (error) {
     console.error('Error updating Twilio configuration:', error);
     return NextResponse.json({ error: 'Failed to update Twilio configuration' }, { status: 500 });

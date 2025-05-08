@@ -128,7 +128,7 @@ export function CallInterface({ isDialPadOpen, setIsDialPadOpen }: CallInterface
         body: JSON.stringify({
           contacts: [
             {
-              phoneNumber: phoneNumber,
+              number: phoneNumber,
               name: contactName || `Caller (${phoneNumber})`,
             }
           ]
