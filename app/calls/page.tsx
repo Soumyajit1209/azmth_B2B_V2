@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { CallInterface } from "@/components/calls/call-interface"
-import { CallHistory } from "@/components/calls/call-history"
+import CallHistoryPage from "@/components/calls/call-history"
 import { CallStats } from "@/components/calls/call-stats"
 import { Button } from "@/components/ui/button"
 import { Phone } from "lucide-react"
@@ -85,7 +85,7 @@ export default function CallsPage() {
       </DashboardHeader>
       <div className="grid gap-4 md:grid-cols-3">
         <div className="md:col-span-1">
-          <CallHistory />
+          <CallHistoryPage />
         </div>
         <div className="md:col-span-2">
           <CallInterface isDialPadOpen={isDialPadOpen} setIsDialPadOpen={setIsDialPadOpen} />
