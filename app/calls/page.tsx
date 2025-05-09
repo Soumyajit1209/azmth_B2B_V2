@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useUser } from "@clerk/nextjs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CallHistory } from "@/components/calls/call-history"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import CallCampaignModal from "./CallCampaignModal"
 
 export default function CallsPage() {
@@ -220,6 +220,9 @@ export default function CallsPage() {
       {/* Call Campaign Modal */}
       <Dialog open={isCampaignModalOpen} onOpenChange={setIsCampaignModalOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Call Campaign</DialogTitle>
+          </DialogHeader>
           <CallCampaignModal />
         </DialogContent>
       </Dialog>
