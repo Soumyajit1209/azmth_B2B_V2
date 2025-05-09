@@ -353,7 +353,7 @@ export default function CreateCall() {
       <div className="max-w-4xl mx-auto">
         <Card className="shadow-xl border-0">
           <CardHeader className="border-b border-gray-200 px-8 py-6">
-            <CardTitle className="text-3xl font-semibold text-gray-900 mb-2 flex items-center gap-2 justify-between">
+            <CardTitle className="text-3xl font-semibold text-white mb-2 flex items-center gap-2 justify-between">
               Initiate New Calls
               <Badge variant="secondary" className="px-3 py-1.5">
                 {contacts.length} {contacts.length === 1 ? "Contact" : "Contacts"}
@@ -368,10 +368,10 @@ export default function CreateCall() {
                     <FileText className="h-6 w-6 text-primary" />
                   </div>
                   <div className="flex-1 text-center sm:text-left">
-                    <h3 className="font-medium text-gray-900">
+                    <h3 className="font-medium text-white">
                       Import Contacts from CSV
                     </h3>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-gray-400 mt-1">
                       Upload a CSV file to import multiple contacts at once
                     </p>
                   </div>
@@ -419,7 +419,7 @@ export default function CreateCall() {
                       <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary/10 text-primary font-medium mr-3">
                         <span className="text-sm">{index + 1}</span>
                       </div>
-                      <h3 className="font-medium text-lg text-gray-800">
+                      <h3 className="font-medium text-lg text-white">
                         Contact Information
                       </h3>
                     </div>
