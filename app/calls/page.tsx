@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast"
 import { useUser } from "@clerk/nextjs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CallHistory } from "@/components/calls/call-history"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
+import CallCampaignModal from "./CallCampaignModal"
 
 export default function CallsPage() {
   const [hasTwilioConfig, setHasTwilioConfig] = useState(false)
@@ -21,6 +23,7 @@ export default function CallsPage() {
   const [configChecked, setConfigChecked] = useState(false)
   const [refreshHistory, setRefreshHistory] = useState(false)
   const [callHistory, setCallHistory] = useState([])
+  const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false)
   const { toast } = useToast()
   const { user, isLoaded: isUserLoaded } = useUser()
   const userId = user?.id
@@ -182,6 +185,12 @@ export default function CallsPage() {
         <div className="flex items-center gap-2">
           <Button 
             className="flex items-center gap-2" 
+            onClick={() => setIsCampaignModalOpen(true)}
+          >
+            <span>Call Campaign</span>
+          </Button>
+          <Button 
+            className="flex items-center gap-2" 
             onClick={handleNewCallClick}
             disabled={!hasTwilioConfig}
           >
@@ -207,6 +216,13 @@ export default function CallsPage() {
           </div>
         </div>
       </div>
+
+      {/* Call Campaign Modal */}
+      <Dialog open={isCampaignModalOpen} onOpenChange={setIsCampaignModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <CallCampaignModal />
+        </DialogContent>
+      </Dialog>
     </DashboardShell>
   )
 }
