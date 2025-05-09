@@ -78,9 +78,19 @@ export default function LandingPage() {
       if (timeoutId) clearTimeout(timeoutId)
     }
   }, []) 
+  
   const handleAppNavigation = () => {
     router.push("/dashboard")
   }
+
+  // Check if the user is signed in but redirect to dashboard instead of showing landing page
+  useEffect(() => {
+    if (isSignedIn) {
+      // Optional: You could redirect signed-in users directly to dashboard
+      // Uncomment if you want this behavior
+      // router.push("/dashboard")
+    }
+  }, [isSignedIn, router])
 
   const features = [
     {
@@ -194,6 +204,7 @@ export default function LandingPage() {
           />
         </SignedIn>
         <SignedOut>
+          {/* Make sure we always redirect to auth-callback */}
           <SignInButton forceRedirectUrl="/auth-callback" mode="modal">
             <Button 
               variant="outline" 
@@ -286,7 +297,8 @@ export default function LandingPage() {
               </SpotlightButton>
             </SignedIn>
             <SignedOut>
-              <SignInButton mode="modal">
+              {/* Ensure consistent afterSignInUrl */}
+              <SignInButton forceRedirectUrl="/auth-callback" mode="modal">
                 <SpotlightButton 
                   className="bg-white text-black hover:bg-gray-200 relative overflow-hidden group"
                 >
@@ -533,7 +545,8 @@ export default function LandingPage() {
                 </SpotlightButton>
               </SignedIn>
               <SignedOut>
-                <SignInButton mode="modal">
+                {/* Consistent redirect to auth-callback */}
+                <SignInButton forceRedirectUrl="/auth-callback" mode="modal">
                   <SpotlightButton className="bg-white text-black hover:bg-gray-200 relative overflow-hidden group">
                     <span className="absolute inset-0 bg-gradient-to-r from-gray-200 to-white opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
                     <span className="flex items-center relative z-10">

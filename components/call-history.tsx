@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,10 +26,45 @@ export function CallHistory() {
   const [selectedCall, setSelectedCall] = useState<CallRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    fetchCalls();
+  // Function to fetch calls - wrapped in useCallback to prevent recreation on each render
+  const fetchCalls = useCallback(async (silent = false) => {
+    const loadingState = silent ? setIsRefreshing : setIsLoading;
+    loadingState(true);
+
+    try {
+      const response = await fetch("/api/call-records", {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch call records");
+      }
+
+      const data = await response.json();
+      setCalls(data);
+      
+      // We don't need to set filtered calls here as the useEffect below will handle it
+    } catch (error) {
+      console.error("Error fetching call records:", error);
+    } finally {
+      loadingState(false);
+    }
   }, []);
 
+  // Initial fetch on component mount
+  useEffect(() => {
+    fetchCalls();
+    
+    // Set up polling interval for real-time updates (every 10 seconds)
+    const intervalId = setInterval(() => {
+      fetchCalls(true);
+    }, 10000);
+    
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [fetchCalls]);
+
+  // Apply search filtering whenever calls or search query changes
   useEffect(() => {
     if (searchQuery.trim() === "") {
       setFilteredCalls(calls);
@@ -45,35 +80,14 @@ export function CallHistory() {
     }
   }, [searchQuery, calls]);
 
-  const fetchCalls = async () => {
-    const loadingState = calls.length > 0 ? setIsRefreshing : setIsLoading;
-    loadingState(true);
-
-    try {
-      const response = await fetch("/api/call-records", {
-        method: "GET",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch call records");
-      }
-
-      const data = await response.json();
-      setCalls(data);
-      setFilteredCalls(data);
-    } catch (error) {
-      console.error("Error fetching call records:", error);
-    } finally {
-      loadingState(false);
-    }
-  };
-
   const handleCardClick = (call: CallRecord) => {
     setSelectedCall(call);
   };
 
   const closeModal = () => {
     setSelectedCall(null);
+    // Refresh calls when modal is closed to ensure we have the latest status
+    fetchCalls(true);
   };
 
   // Helper function to determine call icon
@@ -83,7 +97,7 @@ export function CallHistory() {
       return <PhoneMissed className="h-4 w-4 text-destructive" />;
     }
 
-    // Check if it's inbound or outbound (you may need to adjust based on actual data structure)
+    // Check if it's inbound or outbound
     const isInbound = call.direction === "inbound";
 
     return isInbound ? (
@@ -113,28 +127,35 @@ export function CallHistory() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  // Helper function to determine if a call is active
+  const isCallActive = (call: CallRecord) => {
+    return ['in-progress', 'connecting', 'ringing'].includes(
+      call.status?.toLowerCase() || ""
+    );
+  };
+
   return (
     <Card className="h-[600px] flex flex-col">
-      <CardHeader className="flex flex-col items-center justify-between">
-        <div className="flex items-center justify-between w-full mb-4 ">
-        <CardTitle>Call History</CardTitle>
+      <CardHeader className="flex flex-col items-center justify-between space-y-2">
+        <div className="flex items-center justify-between w-full">
+          <CardTitle>Call History</CardTitle>
           <Button
             variant="ghost"
             size="sm"
             className="gap-1"
-            onClick={fetchCalls}
+            onClick={() => fetchCalls()}
             disabled={isLoading || isRefreshing}
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
             <span className="text-xs">Refresh</span>
           </Button>
         </div>
-          <Input
-            placeholder="Search by name or number"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-64"
-          />
+        <Input
+          placeholder="Search by name or number"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full"
+        />
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
         {isLoading ? (
@@ -151,7 +172,7 @@ export function CallHistory() {
             <Button
               variant="outline"
               size="sm"
-              onClick={fetchCalls}
+              onClick={() => fetchCalls()}
               className="gap-2"
             >
               <RefreshCw className="h-4 w-4" />
@@ -164,7 +185,9 @@ export function CallHistory() {
               {filteredCalls.map((call) => (
                 <div
                   key={call.id}
-                  className="flex-col items-center justify-between space-x-4 rounded-md border p-3 hover:bg-accent transition-colors cursor-pointer"
+                  className={`flex-col items-center justify-between space-x-4 rounded-md border p-3 hover:bg-accent transition-colors cursor-pointer ${
+                    isCallActive(call) ? 'border-primary border-2 bg-accent/30' : ''
+                  }`}
                   onClick={() => handleCardClick(call)}
                 >
                   <div className="flex items-center space-x-4">
@@ -181,7 +204,7 @@ export function CallHistory() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 mt-2">
                     {call.usedAI && (
                       <Badge variant="outline" className="flex items-center gap-1">
                         <Bot className="h-3 w-3" />
@@ -205,7 +228,13 @@ export function CallHistory() {
         )}
       </CardContent>
 
-      {selectedCall && <CallDetailModal call={selectedCall} onClose={closeModal} />}
+      {selectedCall && (
+        <CallDetailModal 
+          call={selectedCall} 
+          onClose={closeModal} 
+          onStatusChange={() => fetchCalls(true)}
+        />
+      )}
     </Card>
   );
 }

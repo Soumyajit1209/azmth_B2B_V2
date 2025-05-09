@@ -27,9 +27,10 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate, formatDuration, getStatusBadge } from "@/lib/utils";
 import { CallRecord } from "@/types/interfaces";
 
-interface CallDetailModalProps {
+export interface CallDetailModalProps {
   call: CallRecord;
   onClose: () => void;
+  onStatusChange?: () => Promise<void>;
 }
 
 export default function CallDetailModal({

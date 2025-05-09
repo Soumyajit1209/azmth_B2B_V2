@@ -1,10 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { CallInterface } from "@/components/calls/call-interface"
-import CallHistoryPage from "@/components/calls/call-history"
 import { CallStats } from "@/components/calls/call-stats"
 import { Button } from "@/components/ui/button"
 import { Phone } from "lucide-react"
@@ -12,17 +11,22 @@ import TwilioConfigModal from "@/components/TwilioConfig"
 import { useToast } from "@/hooks/use-toast"
 import { useUser } from "@clerk/nextjs"
 import { Skeleton } from "@/components/ui/skeleton"
+import { CallHistory } from "@/components/calls/call-history"
 
 export default function CallsPage() {
-  const [isDialPadOpen, setIsDialPadOpen] = useState(false)
   const [hasTwilioConfig, setHasTwilioConfig] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [twilioConfigData, setTwilioConfigData] = useState(null)
   const [assistantId, setAssistantId] = useState(null)
   const [configChecked, setConfigChecked] = useState(false)
+  const [refreshHistory, setRefreshHistory] = useState(false)
+  const [callHistory, setCallHistory] = useState([])
   const { toast } = useToast()
   const { user, isLoaded: isUserLoaded } = useUser()
   const userId = user?.id
+  
+  // Create a ref to access the CallInterface methods
+  const callInterfaceRef = useRef<{ addNewContactForm: () => void } | null>(null)
 
   // Check if user has Twilio configuration
   useEffect(() => {
@@ -78,12 +82,23 @@ export default function CallsPage() {
       return
     }
     
-    setIsDialPadOpen(true)
+    // Instead of incrementing a counter, call the addNewContactForm method directly
+    callInterfaceRef.current?.addNewContactForm()
   }
 
   const handleConfigUpdate = () => {
     setHasTwilioConfig(true)
   }
+
+  // Modified to match the expected type signature in CallInterface component
+  const handleCallStatusChange = useCallback((callId: string, status: string) => {
+    console.log(`Call ${callId} status changed to ${status}`)
+    
+    // Trigger call history refresh when a call is completed or ended
+    if (status === "completed" || status === "ended" || status === "no-answer" || status === "failed") {
+      setRefreshHistory(prev => !prev)
+    }
+  }, [])
 
   // Loading skeleton components
   const HeaderSkeleton = () => (
@@ -178,12 +193,14 @@ export default function CallsPage() {
       </DashboardHeader>
       <div className="grid gap-4 md:grid-cols-3">
         <div className="md:col-span-1">
-          <CallHistoryPage />
+          <CallHistory key={`history-${refreshHistory}`} />
         </div>
         <div className="md:col-span-2">
           <CallInterface 
-            isDialPadOpen={isDialPadOpen} 
-            setIsDialPadOpen={setIsDialPadOpen} 
+            ref={callInterfaceRef}
+            isDialPadOpen={false}
+            setIsDialPadOpen={() => {}}
+            onCallStatusChange={handleCallStatusChange}
           />
           <div className="mt-4">
             <CallStats />
