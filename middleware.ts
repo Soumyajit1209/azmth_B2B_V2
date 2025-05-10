@@ -3,27 +3,19 @@ import { NextResponse } from "next/server";
 
 export default clerkMiddleware((auth, req) => {
   // List of protected routes
-  const protectedRoutes = [
-    '/dashboard',
-    '/analytics',
-    '/voice-clone',
-    '/calls',
-    '/customers',
-    '/calendar',
-    '/create-call'
-  ];
-  
+  const protectedRoutes = ['/dashboard'];
+
   // Check if the current path matches any protected route
-  const isProtectedRoute = protectedRoutes.some(route => 
-    req.nextUrl.pathname === route || 
+  const isProtectedRoute = protectedRoutes.some(route =>
+    req.nextUrl.pathname === route ||
     req.nextUrl.pathname.startsWith(`${route}/`)
   );
-  
+
   // Allow access to unprotected routes (like root '/')
   if (!isProtectedRoute) {
     return NextResponse.next();
   }
-  
+
   // For protected routes, the default clerk middleware will handle authentication
   return;
 });

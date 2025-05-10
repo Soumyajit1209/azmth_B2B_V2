@@ -5,6 +5,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Sidebar } from "@/components/sidebar"
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "@/components/ui/sonner"
 
 const urbanist = Urbanist({
   subsets: ['latin'],
@@ -30,9 +31,10 @@ export default function RootLayout({
     <ClerkProvider>
     <html lang="en" suppressHydrationWarning>
        <body className={urbanist.className} suppressHydrationWarning>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
           <div className="flex h-screen overflow-hidden">
             <Sidebar />
+            <Toaster />
             <div className="flex-1 overflow-auto">{children}</div>
           </div>
         </ThemeProvider>

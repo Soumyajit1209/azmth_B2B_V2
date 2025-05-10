@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState, useEffect, ChangeEvent } from "react"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect, ChangeEvent } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,12 +10,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Settings } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import { useUser } from "@clerk/nextjs"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { AwardIcon, Settings } from "lucide-react";
+import { toast } from "sonner"
+import { useUser } from "@clerk/nextjs";
 
 interface TwilioConfigData {
   sid: string;
@@ -28,7 +28,10 @@ interface TwilioConfigModalProps {
   initialData?: TwilioConfigData | null;
 }
 
-export default function TwilioConfigModal({ onConfigUpdate, initialData = null }: TwilioConfigModalProps) {
+export default function TwilioConfigModal({
+  onConfigUpdate,
+  initialData = null,
+}: TwilioConfigModalProps) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<TwilioConfigData>({
     sid: "",
@@ -36,9 +39,7 @@ export default function TwilioConfigModal({ onConfigUpdate, initialData = null }
     phoneNumber: "",
   });
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
   const { user } = useUser();
-  const userId = user?.id;
 
   useEffect(() => {
     if (initialData) {
@@ -57,49 +58,76 @@ export default function TwilioConfigModal({ onConfigUpdate, initialData = null }
 
   const handleSubmit = async () => {
     if (!formData.sid || !formData.authToken || !formData.phoneNumber) {
-      toast({
-        title: "Invalid configuration",
-        description: "All fields are required",
-        variant: "destructive",
-      });
+      toast.error("All fields are required");
       return;
     }
 
     try {
       setIsLoading(true);
+      toast("Creating assistant...", {
+        description: "Please wait while we set up your assistant.",
+        duration: 3000,
+      });
 
-      const response = await fetch("/api/twilio-config", {
+      // Step 1: Create assistant
+      const assistantRes = await fetch("/api/create-assistant", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(userId && { "x-clerk-user-id": userId }),
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ clerkId: user?.id }),
       });
 
-      if (response.ok) {
-        const responseData = await response.json();
-
-        toast({
-          title: "Configuration saved",
-          description: "Your Twilio configuration has been saved successfully",
-        });
-
-        if (responseData.assistantId) {
-          localStorage.setItem("assistantId", responseData.assistantId);
-        }
-
-        onConfigUpdate();
-        setOpen(false);
-      } else {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to save configuration");
+      if (!assistantRes.ok) {
+        const error = await assistantRes.json();
+        throw new Error(error.message || "Failed to create assistant");
       }
-    } catch (error: unknown) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Something went wrong",
-        variant: "destructive",
+
+      const { id } = await assistantRes.json();
+      console.log("Ass id is getiing", id);
+      if (!id) {
+        throw new Error("No assistant ID returned");
+      }
+
+      localStorage.setItem("assistantId", id);
+      toast("Assistant created", {
+        description: "Assistant has been successfully created.",
+      });
+
+      // Step 2: Create number
+      toast("Linking Twilio number...", {
+        description: "Almost there! Configuring your number.",
+        duration: 3000,
+      });
+
+      const numberRes = await fetch("/api/create-number", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+          sid: formData.sid,
+          authToken: formData.authToken,
+          phoneNumber: formData.phoneNumber,
+          clerkId: user?.id,
+        }),
+      });
+
+      if (!numberRes.ok) {
+        const error = await numberRes.json();
+        throw new Error(error.message || "Failed to create number");
+      }
+      const data = await numberRes.json()
+      toast.success("Twilio configuration complete", {
+        description: data.message || "Your assistant is now ready to make calls.",
+      });
+
+      onConfigUpdate();
+      setOpen(false);
+    } catch (err: any) {
+      toast.error("Error", {
+        description: err.message || "Something went wrong",
       });
     } finally {
       setIsLoading(false);
@@ -142,10 +170,10 @@ export default function TwilioConfigModal({ onConfigUpdate, initialData = null }
             <Input
               id="authToken"
               name="authToken"
+              type="password"
               value={formData.authToken}
               onChange={handleChange}
               className="col-span-3"
-              type="password"
               placeholder="Enter auth token"
             />
           </div>

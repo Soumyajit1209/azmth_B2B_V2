@@ -8,7 +8,7 @@ import { CallStats } from "@/components/calls/call-stats"
 import { Button } from "@/components/ui/button"
 import { Phone } from "lucide-react"
 import TwilioConfigModal from "@/components/TwilioConfig"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 import { useUser } from "@clerk/nextjs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CallHistory } from "@/components/calls/call-history"
@@ -22,12 +22,10 @@ export default function CallsPage() {
   const [assistantId, setAssistantId] = useState(null)
   const [configChecked, setConfigChecked] = useState(false)
   const [refreshHistory, setRefreshHistory] = useState(false)
-  const [callHistory, setCallHistory] = useState([])
   const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false)
-  const { toast } = useToast()
   const { user, isLoaded: isUserLoaded } = useUser()
   const userId = user?.id
-  
+
   // Create a ref to access the CallInterface methods
   const callInterfaceRef = useRef<{ addNewContactForm: () => void } | null>(null)
 
@@ -40,10 +38,6 @@ export default function CallsPage() {
         setIsLoading(true)
         const response = await fetch("/api/twilio-config", {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "x-clerk-user-id": userId,
-          },
           cache: "no-store",
         })
 
@@ -77,14 +71,12 @@ export default function CallsPage() {
 
   const handleNewCallClick = () => {
     if (!hasTwilioConfig) {
-      toast({
-        title: "Twilio not configured",
+      toast("Twilio not configured", {
         description: "Please configure your Twilio account first",
-        variant: "destructive",
       })
       return
     }
-    
+
     // Instead of incrementing a counter, call the addNewContactForm method directly
     callInterfaceRef.current?.addNewContactForm()
   }
@@ -96,7 +88,7 @@ export default function CallsPage() {
   // Modified to match the expected type signature in CallInterface component
   const handleCallStatusChange = useCallback((callId: string, status: string) => {
     console.log(`Call ${callId} status changed to ${status}`)
-    
+
     // Trigger call history refresh when a call is completed or ended
     if (status === "completed" || status === "ended" || status === "no-answer" || status === "failed") {
       setRefreshHistory(prev => !prev)
@@ -148,7 +140,7 @@ export default function CallsPage() {
     if (!configChecked && isUserLoaded) {
       const cachedHasConfig = localStorage.getItem('hasTwilioConfig') === 'true'
       const cachedConfigData = localStorage.getItem('twilioConfigData')
-      
+
       if (cachedHasConfig && cachedConfigData) {
         try {
           const parsedData = JSON.parse(cachedConfigData)
@@ -158,7 +150,7 @@ export default function CallsPage() {
           console.error("Error parsing cached Twilio config:", e)
         }
       }
-      
+
       setConfigChecked(true)
     }
   }, [isUserLoaded, configChecked])
@@ -183,14 +175,14 @@ export default function CallsPage() {
     <DashboardShell>
       <DashboardHeader heading="Calls" text="Manage and monitor customer calls with AI assistance.">
         <div className="flex items-center gap-2">
-          <Button 
-            className="flex items-center gap-2" 
+          <Button
+            className="flex items-center gap-2"
             onClick={() => setIsCampaignModalOpen(true)}
           >
             <span>Call Campaign</span>
           </Button>
-          <Button 
-            className="flex items-center gap-2" 
+          <Button
+            className="flex items-center gap-2"
             onClick={handleNewCallClick}
             disabled={!hasTwilioConfig}
           >
@@ -205,10 +197,10 @@ export default function CallsPage() {
           <CallHistory key={`history-${refreshHistory}`} />
         </div>
         <div className="md:col-span-2">
-          <CallInterface 
+          <CallInterface
             ref={callInterfaceRef}
             isDialPadOpen={false}
-            setIsDialPadOpen={() => {}}
+            setIsDialPadOpen={() => { }}
             onCallStatusChange={handleCallStatusChange}
           />
           <div className="mt-4">

@@ -99,8 +99,7 @@ export async function POST(request: NextRequest) {
       }),
     });
     const data = await response.json();
-    console.log("API Response:", data);
-    return NextResponse.json(data.id);
+    return NextResponse.json(data);
   } catch (error) {
     console.error("Error creating calls:", error);
     return NextResponse.json(
