@@ -21,7 +21,7 @@ import {
   Upload,
   FileText,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge";
 import Papa from "papaparse";
 import {
@@ -68,7 +68,6 @@ export default function CreateCall() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const router = useRouter();
-  const { toast } = useToast();
 
   const addContact = () => {
     setContacts([
@@ -79,10 +78,8 @@ export default function CreateCall() {
 
   const removeContact = (id: string) => {
     if (contacts.length === 1) {
-      toast({
-        title: "Cannot remove",
+      toast("Cannot remove", {
         description: "You need at least one contact",
-        variant: "destructive",
       });
       return;
     }
@@ -172,38 +169,30 @@ export default function CreateCall() {
 
               setIsDialogOpen(true);
             } else {
-              toast({
-                title: "Empty file",
+              toast("Empty file", {
                 description: "The CSV file appears to be empty",
-                variant: "destructive",
               });
             }
           },
           error: (error: any) => {
             console.error("Error parsing CSV:", error);
-            toast({
-              title: "File error",
+            toast("File error", {
               description:
                 "Could not parse the CSV file. Please check the format.",
-              variant: "destructive",
             });
           },
         });
       } catch (error) {
         console.error("Error reading CSV file:", error);
-        toast({
-          title: "File error",
+        toast("File error", {
           description: "Could not read the file. Please check the format.",
-          variant: "destructive",
         });
       }
     };
 
     reader.onerror = () => {
-      toast({
-        title: "File error",
+      toast("File error", {
         description: "Failed to read the file",
-        variant: "destructive",
       });
     };
 
@@ -212,10 +201,8 @@ export default function CreateCall() {
 
   const importContacts = () => {
     if (!nameColumn || !numberColumn) {
-      toast({
-        title: "Missing columns",
+      toast("Missing columns", {
         description: "Please select both name and phone number columns",
-        variant: "destructive",
       });
       return;
     }
@@ -262,10 +249,8 @@ export default function CreateCall() {
       .filter((contact) => contact.name && contact.number); // Ensure both name and number exist
 
     if (newContacts.length === 0) {
-      toast({
-        title: "No valid contacts",
+      toast("No valid contacts", {
         description: "The file doesn't contain any valid contacts",
-        variant: "destructive",
       });
       return;
     }
@@ -274,8 +259,7 @@ export default function CreateCall() {
     setContacts(newContacts);
     setIsDialogOpen(false);
 
-    toast({
-      title: "Import successful",
+    toast("Import successful", {
       description: `Imported ${newContacts.length} contacts from the CSV file`,
     });
 
@@ -294,10 +278,8 @@ export default function CreateCall() {
     );
 
     if (invalidContacts.length > 0) {
-      toast({
-        title: "Validation Error",
+      toast("Validation Error", {
         description: "All contacts must have a name and phone number",
-        variant: "destructive",
       });
       return;
     }
@@ -329,8 +311,7 @@ export default function CreateCall() {
 
       console.log("API Response:", data);
 
-      toast({
-        title: "Success",
+      toast("Success", {
         description: "Calls have been initiated successfully",
       });
 
@@ -338,10 +319,8 @@ export default function CreateCall() {
       router.push("/call-records");
     } catch (error) {
       console.error("Error creating calls:", error);
-      toast({
-        title: "Error",
+      toast("Error", {
         description: "Failed to create calls. Please try again.",
-        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -478,7 +457,7 @@ export default function CreateCall() {
             </CardContent>
 
             <CardFooter className="px-8 py-5 border-t border-gray-200 flex flex-col sm:flex-row justify-end gap-3">
-              
+
               <Button
                 type="submit"
                 disabled={isSubmitting}
@@ -580,11 +559,10 @@ export default function CreateCall() {
                       {headers.map((header, index) => (
                         <TableHead
                           key={index}
-                          className={`${
-                            header === nameColumn || header === numberColumn
-                              ? "bg-primary/10 text-primary"
-                              : ""
-                          }`}
+                          className={`${header === nameColumn || header === numberColumn
+                            ? "bg-primary/10 text-primary"
+                            : ""
+                            }`}
                         >
                           {header}
                         </TableHead>
@@ -597,11 +575,10 @@ export default function CreateCall() {
                         {headers.map((header, colIndex) => (
                           <TableCell
                             key={colIndex}
-                            className={`${
-                              header === nameColumn || header === numberColumn
-                                ? "bg-primary/5"
-                                : ""
-                            }`}
+                            className={`${header === nameColumn || header === numberColumn
+                              ? "bg-primary/5"
+                              : ""
+                              }`}
                           >
                             {row[header] !== undefined
                               ? String(row[header])

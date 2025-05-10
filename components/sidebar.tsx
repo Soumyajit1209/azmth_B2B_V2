@@ -1,6 +1,6 @@
 "use client";
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 
-interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
@@ -44,32 +44,32 @@ export function Sidebar({ className }: SidebarProps) {
     },
     {
       name: "Analytics",
-      href: "/analytics",
+      href: "/dashboard/analytics",
       icon: BarChart3,
     },
     {
       name: "Voice & Video Clone",
-      href: "/voice-clone",
+      href: "/dashboard/voice-clone",
       icon: Mic,
     },
     {
       name: "Calls",
-      href: "/calls",
+      href: "/dashboard/calls",
       icon: Phone,
     },
     {
       name: "Customers",
-      href: "/customers",
+      href: "/dashboard/customers",
       icon: Users,
     },
     {
       name: "Calendar",
-      href: "/calendar",
+      href: "/dashboard/calendar",
       icon: Calendar,
     },
     {
       name: "Documents",
-      href: "/documents",
+      href: "/dashboard/documents",
       icon: FileText,
     },
   ];
@@ -91,16 +91,16 @@ export function Sidebar({ className }: SidebarProps) {
           className
         )}
       >
-      
+
         <div className="flex h-14 items-center border-b px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-        <div className="relative flex items-center">
-          <div className="w-20 h-8 bg-white rounded-lg flex items-center justify-center">
-            <span className="text-black font-semibold text-lg">azmth</span>
-          </div>
-          <span className="ml-2 text-gray-300 text-foreground">CRM</span>
-        </div>
-      </Link>
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            <div className="relative flex items-center">
+              <div className="w-20 h-8 bg-white rounded-lg flex items-center justify-center">
+                <span className="text-black font-semibold text-lg">azmth</span>
+              </div>
+              <span className="ml-2 text-gray-300 text-foreground">CRM</span>
+            </div>
+          </Link>
           <Button
             variant="ghost"
             size="icon"
