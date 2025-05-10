@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AwardIcon, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { toast } from "sonner"
 import { useUser } from "@clerk/nextjs";
 
@@ -58,7 +58,10 @@ export default function TwilioConfigModal({
 
   const handleSubmit = async () => {
     if (!formData.sid || !formData.authToken || !formData.phoneNumber) {
-      toast.error("All fields are required");
+      toast("Error",
+        {
+          description:"All fields are required"
+        });
       return;
     }
 
@@ -83,16 +86,17 @@ export default function TwilioConfigModal({
         throw new Error(error.message || "Failed to create assistant");
       }
 
-      const { id } = await assistantRes.json();
-      console.log("Ass id is getiing", id);
+      const { id,message } = await assistantRes.json();
       if (!id) {
-        throw new Error("No assistant ID returned");
+        throw new Error(message || "Assistant ID not found");
       }
-
-      localStorage.setItem("assistantId", id);
-      toast("Assistant created", {
-        description: "Assistant has been successfully created.",
-      });
+      if (message === "Assistant already created") {
+        toast("Success", {
+          description: message || "Assistant has been successfully created.",
+        });
+        setOpen(false);
+        return;
+      }
 
       // Step 2: Create number
       toast("Linking Twilio number...", {
@@ -119,7 +123,7 @@ export default function TwilioConfigModal({
         throw new Error(error.message || "Failed to create number");
       }
       const data = await numberRes.json()
-      toast.success("Twilio configuration complete", {
+      toast("Twilio configuration complete", {
         description: data.message || "Your assistant is now ready to make calls.",
       });
 
