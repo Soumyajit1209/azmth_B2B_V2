@@ -1,20 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import axios from "axios";
 import connectDB from "@/lib/connectDB";
+import { currentUser } from "@clerk/nextjs/server";
 import User from "@/modals/User";
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("Get into create Assistent...");
-    console.log(process.env.VAPI_API_KEY);
     
-    const { clerkId } = await request.json();
+    const user = await currentUser();
+    const clerkId = user?.id;
+    if (!clerkId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     await connectDB();
 
     // Assuming you have a User model and you want to fetch the user's Twilio configuration
     const userRecord = await User.findOne({ clerkId });
     if (!userRecord) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    if (userRecord.assistantId) {
+      return NextResponse.json({
+        message: "Assistant already created",
+        id: userRecord.assistantId,
+      });
     }
     const { firstName } = userRecord;
 
@@ -99,6 +107,17 @@ export async function POST(request: NextRequest) {
       }),
     });
     const data = await response.json();
+    const assistantId = data.id;
+    const updatedUser = await User.findOneAndUpdate(
+      { clerkId },
+      {
+        $set: {
+          assistantId,
+        },
+      },
+      { new: true, upsert: true }
+    );
+    console.log("Assistant created successfully:", updatedUser);
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error creating calls:", error);
