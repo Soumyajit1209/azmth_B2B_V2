@@ -2,18 +2,18 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useAuth } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Progress } from "@/components/ui/progress"
 import { Upload, File, Check } from "lucide-react"
 
 export function DocumentUpload() {
+  const { userId } = useAuth()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [customerId, setCustomerId] = useState("")
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadComplete, setUploadComplete] = useState(false)
@@ -26,7 +26,7 @@ export function DocumentUpload() {
   }
 
   const handleUpload = async () => {
-    if (!selectedFile || !customerId) return
+    if (!selectedFile || !userId) return
 
     setIsUploading(true)
     setUploadProgress(0)
@@ -43,10 +43,10 @@ export function DocumentUpload() {
     }, 300)
 
     try {
-      // In a real implementation, this would use FormData to upload the file
+      // Now using userId from Clerk instead of customerId
       const formData = new FormData()
       formData.append("file", selectedFile)
-      formData.append("customerId", customerId)
+      formData.append("userId", userId)
 
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 3000))
@@ -77,24 +77,16 @@ export function DocumentUpload() {
       <CardContent>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="file">Select File</Label>
+            <Label htmlFor="file">Select PDF File</Label>
             <div className="flex items-center gap-2">
-              <Input id="file" type="file" onChange={handleFileChange} className="flex-1" />
+              <Input 
+                id="file" 
+                type="file" 
+                accept=".pdf" 
+                onChange={handleFileChange} 
+                className="flex-1" 
+              />
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="customer">Select Customer</Label>
-            <Select value={customerId} onValueChange={setCustomerId}>
-              <SelectTrigger id="customer">
-                <SelectValue placeholder="Select customer" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cust_1">John Doe</SelectItem>
-                <SelectItem value="cust_2">Jane Smith</SelectItem>
-                <SelectItem value="cust_3">Robert Johnson</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {selectedFile && (
@@ -122,7 +114,7 @@ export function DocumentUpload() {
             </div>
           )}
 
-          <Button onClick={handleUpload} disabled={!selectedFile || !customerId || isUploading} className="w-full">
+          <Button onClick={handleUpload} disabled={!selectedFile || !userId || isUploading} className="w-full">
             <Upload className="mr-2 h-4 w-4" />
             {isUploading ? "Uploading..." : "Upload Document"}
           </Button>
