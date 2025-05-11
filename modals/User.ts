@@ -29,7 +29,6 @@ const UserSchema: Schema = new Schema(
             phoneNumber: { type: String},
         },
         assistantId: { type: String },
-        
     },
     {
         timestamps: true, // Automatically adds createdAt and updatedAt fields

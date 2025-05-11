@@ -7,12 +7,7 @@ import connectDB from '@/lib/connectDB';
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
-    
-    // Wait for auth promise to resolve
-    const authResult = await auth();
-    const clerkId = authResult.userId;
-    console.log('Clerk ID:', clerkId);
-    
+    const clerkId = request.headers.get("x-clerk-user-id");
     if (!clerkId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

@@ -12,11 +12,13 @@ import {
   PhoneOutgoing,
   PhoneMissed,
   Bot,
-  RefreshCw
+  RefreshCw,
 } from "lucide-react";
 import { formatDuration, formatDate, getStatusBadge } from "@/lib/utils";
-import CallDetailModal from "@/components/call-detail-modal";
+import CallDetailModal from "@/components/calls/call-detail-modal";
 import { CallRecord } from "@/types/interfaces";
+import { useUser } from "@clerk/nextjs";
+import { toast } from "sonner";
 
 export function CallHistory() {
   const [calls, setCalls] = useState<CallRecord[]>([]);
@@ -25,46 +27,58 @@ export function CallHistory() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCall, setSelectedCall] = useState<CallRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const { user, isLoaded: isUserLoaded } = useUser();
+  const userId = user?.id;
 
-  // Function to fetch calls - wrapped in useCallback to prevent recreation on each render
-  const fetchCalls = useCallback(async (silent = false) => {
-    const loadingState = silent ? setIsRefreshing : setIsLoading;
-    loadingState(true);
+  const fetchCalls = useCallback(
+    async (silent = false) => {
+      const loadingState = silent ? setIsRefreshing : setIsLoading;
+      loadingState(true);
 
-    try {
-      const response = await fetch("/api/call-records", {
-        method: "GET",
-      });
+      try {
+        const response = await fetch("/api/call-records", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "x-clerk-user-id": userId || "",
+          },
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch call records");
+        if (!response.ok) {
+          throw new Error("Failed to fetch call records");
+        }
+
+        const data = await response.json();
+        if (data.data == 0) {
+          return;
+        }
+        setCalls(data);
+
+        if (!silent) {
+          toast("Call records fetched successfully");
+        }
+      } catch (error) {
+        console.error("Error fetching call records:", error);
+        toast("Failed to fetch call records", {
+          description: "Please try again.",
+        });
+      } finally {
+        loadingState(false);
       }
+    },
+    [userId]
+  );
 
-      const data = await response.json();
-      setCalls(data);
-      
-      // We don't need to set filtered calls here as the useEffect below will handle it
-    } catch (error) {
-      console.error("Error fetching call records:", error);
-    } finally {
-      loadingState(false);
-    }
-  }, []);
-
-  // Initial fetch on component mount
   useEffect(() => {
     fetchCalls();
-    
-    // Set up polling interval for real-time updates (every 10 seconds)
+
     const intervalId = setInterval(() => {
       fetchCalls(true);
     }, 10000);
-    
-    // Clean up interval on component unmount
+
     return () => clearInterval(intervalId);
   }, [fetchCalls]);
 
-  // Apply search filtering whenever calls or search query changes
   useEffect(() => {
     if (searchQuery.trim() === "") {
       setFilteredCalls(calls);
@@ -86,18 +100,14 @@ export function CallHistory() {
 
   const closeModal = () => {
     setSelectedCall(null);
-    // Refresh calls when modal is closed to ensure we have the latest status
     fetchCalls(true);
   };
 
-  // Helper function to determine call icon
   const getCallIcon = (call: CallRecord) => {
-    // Check if it's a missed call
     if (call.endedReason === "customer-did-not-answer") {
       return <PhoneMissed className="h-4 w-4 text-destructive" />;
     }
 
-    // Check if it's inbound or outbound
     const isInbound = call.direction === "inbound";
 
     return isInbound ? (
@@ -107,14 +117,12 @@ export function CallHistory() {
     );
   };
 
-  // Format date for display in list
   const formatCallTime = (timestamp: string) => {
     if (!timestamp) return "N/A";
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  // Get call duration in mm:ss format
   const getCallDuration = (startedAt: string, endedAt: string) => {
     if (!startedAt || !endedAt) return "00:00";
 
@@ -127,9 +135,8 @@ export function CallHistory() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Helper function to determine if a call is active
   const isCallActive = (call: CallRecord) => {
-    return ['in-progress', 'connecting', 'ringing'].includes(
+    return ["in-progress", "connecting", "ringing"].includes(
       call.status?.toLowerCase() || ""
     );
   };
@@ -146,7 +153,9 @@ export function CallHistory() {
             onClick={() => fetchCalls()}
             disabled={isLoading || isRefreshing}
           >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+            />
             <span className="text-xs">Refresh</span>
           </Button>
         </div>
@@ -182,56 +191,59 @@ export function CallHistory() {
         ) : (
           <ScrollArea className="h-[500px] pr-4">
             <div className="space-y-4">
-              {filteredCalls.map((call) => (
-                <div
-                  key={call.id}
-                  className={`flex-col items-center justify-between space-x-4 rounded-md border p-3 hover:bg-accent transition-colors cursor-pointer ${
-                    isCallActive(call) ? 'border-primary border-2 bg-accent/30' : ''
-                  }`}
-                  onClick={() => handleCardClick(call)}
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="rounded-full bg-primary/10 p-2">
-                      {getCallIcon(call)}
-                    </div>
-                    <div>
-                      <div className="font-medium">
-                        {call.customer?.name || "Unknown Caller"}
+              {filteredCalls &&
+                filteredCalls.map((call) => (
+                  <div
+                    key={call.id}
+                    className={`flex-col items-center justify-between space-x-4 rounded-md border p-3 hover:bg-accent transition-colors cursor-pointer ${
+                      isCallActive(call)
+                        ? "border-primary border-2 bg-accent/30"
+                        : ""
+                    }`}
+                    onClick={() => handleCardClick(call)}
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className="rounded-full bg-primary/10 p-2">
+                        {getCallIcon(call)}
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {call.customer?.number || "N/A"} •{" "}
-                        {formatCallTime(call.startedAt || call.createdAt)}
+                      <div>
+                        <div className="font-medium">
+                          {call.customer?.name || "Unknown Caller"}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {call.customer?.number || "N/A"} •{" "}
+                          {formatCallTime(call.startedAt || call.createdAt)}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-2 mt-2">
-                    {call.usedAI && (
-                      <Badge variant="outline" className="flex items-center gap-1">
-                        <Bot className="h-3 w-3" />
-                        <span>AI</span>
+                    <div className="flex items-center space-x-2 mt-2">
+                      {call.usedAI && (
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <Bot className="h-3 w-3" />
+                          <span>AI</span>
+                        </Badge>
+                      )}
+                      <Badge variant="secondary">
+                        {getCallDuration(call.startedAt, call.endedAt)}
                       </Badge>
-                    )}
-                    <Badge variant="secondary">
-                      {getCallDuration(call.startedAt, call.endedAt)}
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className={getStatusBadge(call.status, call.endedReason).color}
-                    >
-                      {getStatusBadge(call.status, call.endedReason).text}
-                    </Badge>
+                      <Badge
+                        variant="outline"
+                        className={getStatusBadge(call.status, call.endedReason).color}
+                      >
+                        {getStatusBadge(call.status, call.endedReason).text}
+                      </Badge>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </ScrollArea>
         )}
       </CardContent>
 
       {selectedCall && (
-        <CallDetailModal 
-          call={selectedCall} 
-          onClose={closeModal} 
+        <CallDetailModal
+          call={selectedCall}
+          onClose={closeModal}
           onStatusChange={() => fetchCalls(true)}
         />
       )}

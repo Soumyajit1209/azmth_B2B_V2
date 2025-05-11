@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/connectDB";
-import { currentUser } from "@clerk/nextjs/server";
 import User from "@/modals/User";
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await currentUser();
-    const clerkId = user?.id;
-    if (!clerkId) {
+    const userId = request.headers.get("x-clerk-user-id");
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -16,7 +14,7 @@ export async function POST(request: NextRequest) {
     
     if (!content) {
       return NextResponse.json(
-        { error: "Document content is required" },
+        { message: "Document content is required" },
         { status: 400 }
       );
     }
@@ -24,7 +22,7 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     // Fetch the user record
-    const userRecord = await User.findOne({ clerkId });
+    const userRecord = await User.findOne({ userId });
     if (!userRecord) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -125,7 +123,7 @@ export async function POST(request: NextRequest) {
     
     // Update user record with new assistant ID
     const updatedUser = await User.findOneAndUpdate(
-      { clerkId },
+      { userId },
       {
         $set: {
           assistantId,

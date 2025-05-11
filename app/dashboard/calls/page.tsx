@@ -13,7 +13,7 @@ import { useUser } from "@clerk/nextjs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CallHistory } from "@/components/calls/call-history"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import CallCampaignModal from "./CallCampaignModal"
+import CallCampaignModal from "@/components/calls/call-campaign-modal"
 
 export default function CallsPage() {
   const [hasTwilioConfig, setHasTwilioConfig] = useState(false)
@@ -39,6 +39,10 @@ export default function CallsPage() {
         const response = await fetch("/api/twilio-config", {
           method: "GET",
           cache: "no-store",
+          headers: {
+            "Content-Type": "application/json",
+            "x-clerk-user-id": userId || ""
+          }
         })
 
         if (response.ok) {

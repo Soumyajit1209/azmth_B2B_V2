@@ -30,7 +30,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
     <html lang="en" suppressHydrationWarning>
-       <body className={urbanist.className} suppressHydrationWarning>
+       <body className={urbanist.className}>
         <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
           <div className="flex h-screen overflow-hidden">
             <Sidebar />

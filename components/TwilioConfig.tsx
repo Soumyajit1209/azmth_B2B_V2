@@ -39,6 +39,7 @@ export default function TwilioConfigModal({
     phoneNumber: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [content, setContent] = useState("")
   const { user } = useUser();
 
   useEffect(() => {
@@ -77,14 +78,19 @@ export default function TwilioConfigModal({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ clerkId: user?.id }),
+          "x-clerk-user-id": user?.id || ""
+        }
+        ,
+        body: JSON.stringify({
+          content
+        })
       });
 
       if (!assistantRes.ok) {
         const error = await assistantRes.json();
         throw new Error(error.message || "Failed to create assistant");
       }
+      
 
       const { id,message } = await assistantRes.json();
       if (!id) {
@@ -192,6 +198,19 @@ export default function TwilioConfigModal({
               onChange={handleChange}
               className="col-span-3"
               placeholder="+1..."
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="phoneNumber" className="text-right">
+              Context
+            </Label>
+            <Input
+              id="content"
+              name="content"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="col-span-3"
+              placeholder="Context For Agent"
             />
           </div>
         </div>
