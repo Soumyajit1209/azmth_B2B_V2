@@ -12,6 +12,8 @@
     "@clerk/nextjs": "^6.15.0",
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^3.9.1",
+    "@langchain/core": "^0.3.55",
+    "@langchain/groq": "^0.2.2",
     "@radix-ui/react-accordion": "^1.2.4",
     "@radix-ui/react-alert-dialog": "^1.1.4",
     "@radix-ui/react-aspect-ratio": "^1.1.1",

@@ -94,8 +94,8 @@ export function Sidebar({ className }: SidebarProps) {
 
         <div className="flex h-14 items-center border-b px-4">
           <Link href="/" className="flex items-center gap-2 font-semibold">
-            <div className="relative flex items-center">
-              <div className="w-20 h-8 bg-white rounded-lg flex items-center justify-center">
+            <div className="relative flex items-center justify-center">
+              <div className="w-fit h-fit py-2 px-4 bg-white rounded-lg flex items-center justify-center">
                 <span className="text-black font-semibold text-lg">azmth</span>
               </div>
               <span className="ml-2 text-gray-300 text-foreground">CRM</span>
