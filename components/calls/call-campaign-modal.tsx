@@ -333,8 +333,7 @@ export default function CreateCall() {
         <Card className="shadow-xl border-0">
           <CardHeader className="border-b border-gray-200 px-8 py-6">
             <CardTitle className="text-3xl font-semibold text-white mb-2 flex items-center gap-2 justify-between">
-              Initiate New Calls
-              <Badge variant="secondary" className="px-3 py-1.5">
+              <Badge variant="secondary" className=" px-3 py-1.5">
                 {contacts.length} {contacts.length === 1 ? "Contact" : "Contacts"}
               </Badge>
             </CardTitle>
